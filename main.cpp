@@ -57,5 +57,7 @@ int main(int argc, char* argv[])
     double t_ell     = (t_ell_end - t_ell_begin) / NUM_TEST;
     printf("### ELL CPU Compute Time = %.5f\n", t_ell);
 
+    
+
     return 0;
 }

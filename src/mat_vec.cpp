@@ -6,11 +6,15 @@
  * Functions for Matrix and Vector Operations.
  */
 #include <cassert>
+#include <chrono>
+#include <cmath>
+#include <numa.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "mat_vec.h"
 #include "mytime.h"
+#include "numa_node.h"
 
 #ifdef USE_OPENMP
 #include <omp.h>
@@ -103,6 +107,28 @@ void ell_matvec(const ELL_Matrix& A, const Vector& x, const Vector& y)
     }
 
     return;
+}
+
+void ell_matvec_numa(void* args)
+{
+    NumaNode* pn = (NumaNode*)args;
+    int       me = pn->alloc;
+    numa_run_on_node(me);
+    int M               = pn->M;
+    int nthreads        = pn->nthreads;
+    int numanodes       = pn->numanodes;
+    int coreidx         = pn->coreidx;
+    int threads_pernode = nthreads / numanodes;
+    int task            = ceil((double)M / (double)threads_pernode);
+    int start           = coreidx * task;
+    int end             = (coreidx + 1) * task > M ? M : (coreidx + 1) * task;
+    for (int k = 0; k < pn->nonzeros_in_row; ++k)
+    {
+        for (int i = start; i < end; ++i)
+        {
+            
+        }
+    }
 }
 
 void csr_symgs(const CSR_Matrix& A, const Vector& r, const Vector& x)
