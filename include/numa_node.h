@@ -11,7 +11,8 @@ public:
 
     int      M;
     int      nonzeros_in_row;
-    double*  value;
+    int*     sub_col_ind;
+    double** sub_value;
     double** X;
     double** Y;
 };

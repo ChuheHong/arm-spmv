@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cmath>
 #include <numa.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -109,24 +110,57 @@ void ell_matvec(const ELL_Matrix& A, const Vector& x, const Vector& y)
     return;
 }
 
-void ell_matvec_numa(void* args)
+void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, const Vector& y, int nthreads)
+{
+    NumaNode*      p       = (NumaNode*)malloc(nthreads * sizeof(NumaNode));
+    pthread_t*     threads = (pthread_t*)malloc(nthreads * sizeof(pthread_t));
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_init(&pthread_custom_attr);
+    int numanodes = 8;
+    for (int i = 0; i < nthreads; i++)
+    {
+        p[i].alloc           = i % numanodes;
+        p[i].numanodes       = numanodes;
+        p[i].nthreads        = nthreads;
+        p[i].nonzeros_in_row = A.nonzeros_in_row;
+    }
+    sub_col_ind = (int**)malloc(sizeof(int*) * nthreads);
+    sub_value   = (double**)malloc(sizeof(double*) * nthreads);
+    X           = (double**)malloc(sizeof(double*) * nthreads);
+    Y           = (double**)malloc(sizeof(double*) * nthreads);
+    for (int i = 0; i < nthreads; i++)
+    {
+        sub_col_ind[i] = (int*)numa_alloc_onnode(sizeof(int) * A.nonzeros_in_row * A.nrow / nthreads, p[i].alloc);
+        sub_value[i]   = (double*)numa_alloc_onnode(sizeof(double) * A.nonzeros_in_row * A.nrow / nthreads, p[i].alloc);
+        X[i]           = (double*)numa_alloc_onnode(sizeof(double) * x.size, p[i].alloc);
+        Y[i]           = (double*)numa_alloc_onnode(sizeof(double) * y.size, p[i].alloc);
+    }
+    
+}
+
+void numaspmv(void* args)
 {
     NumaNode* pn = (NumaNode*)args;
     int       me = pn->alloc;
     numa_run_on_node(me);
-    int M               = pn->M;
-    int nthreads        = pn->nthreads;
-    int numanodes       = pn->numanodes;
-    int coreidx         = pn->coreidx;
-    int threads_pernode = nthreads / numanodes;
-    int task            = ceil((double)M / (double)threads_pernode);
-    int start           = coreidx * task;
-    int end             = (coreidx + 1) * task > M ? M : (coreidx + 1) * task;
-    for (int k = 0; k < pn->nonzeros_in_row; ++k)
+    int     M               = pn->M;
+    int     nthreads        = pn->nthreads;
+    int     numanodes       = pn->numanodes;
+    int     coreidx         = pn->coreidx;
+    int     threads_pernode = nthreads / numanodes;
+    int     task            = ceil((double)M / (double)threads_pernode);
+    int     start           = coreidx * task;
+    int     end             = (coreidx + 1) * task > M ? M : (coreidx + 1) * task;
+    int*    col_ind         = sub_col_ind[me];
+    double* values          = sub_value[me];
+    double* x               = X[me];
+    double* y               = Y[me];
+    for (int k = 0; k < pn->nonzeros_in_row; k++)
     {
-        for (int i = start; i < end; ++i)
+        for (int i = start; i < end; i++)
         {
-            
+            int col = col_ind[i + k * M];
+            y[i] += values[i + k * M] * x[col];
         }
     }
 }

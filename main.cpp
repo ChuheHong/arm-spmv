@@ -57,7 +57,9 @@ int main(int argc, char* argv[])
     double t_ell     = (t_ell_end - t_ell_begin) / NUM_TEST;
     printf("### ELL CPU Compute Time = %.5f\n", t_ell);
 
-    
+    // ELL-SpMV-numa
+    y.Fill(0);
+    ell_matvec_numa(C, x, y, nthreads);
 
     return 0;
 }
