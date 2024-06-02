@@ -8,7 +8,7 @@ RANLIB = /usr/bin/ranlib
 all: main 
 
 main:
-	$(CXX) $(CXXFLAGS) main.cpp -o bin/main $(LIBS)
+	$(CXX) $(CXXFLAGS) main.cpp -o bin/main $(LIBS) -lm -lnuma
 	
 %.o: %.cpp
 	$(CXX) -c $(CXXFLAGS) $<

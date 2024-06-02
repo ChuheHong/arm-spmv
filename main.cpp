@@ -6,6 +6,7 @@
 #include "vec_vec.h"
 #include "vector.h"
 
+#include <numa.h>
 #include <omp.h>
 #include <stdio.h>
 #include <string.h>

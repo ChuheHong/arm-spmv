@@ -1,6 +1,6 @@
 CURRENT_PATH = $(shell pwd)
 CXX=g++
-CXXFLAGS+=-O2 -lpthread -fopenmp
+CXXFLAGS+=-O2 -lpthread -fopenmp -lm -lnuma
 CXXFLAGS+=-DUSE_OPENMP -I$(CURRENT_PATH)/../include
 OBJ_PATH =  $(CURRENT_PATH)/../obj
 LIBS=-I$(CURRENT_PATH)../include

@@ -11,9 +11,6 @@
 #include "matrix.h"
 #include "vector.h"
 
-int**    sub_col_ind;
-double **sub_value, **X, **Y;
-
 void coo_matvec(const COO_Matrix& A, const Vector& x, const Vector& y);
 void csr_matvec(const CSR_Matrix& A, const Vector& x, const Vector& y);
 void csc_matvec(const CSC_Matrix& A, const Vector& x, const Vector& y);
@@ -23,6 +20,6 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, const Vector& y, int 
 void csr_symgs(const CSR_Matrix& A, const Vector& r, const Vector& x);
 void ell_symgs(const ELL_Matrix& A, const Vector& r, const Vector& x);
 
-void numaspmv(void* args);
+void* numaspmv(void* args);
 
 #endif
