@@ -116,7 +116,7 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, const Vector& y, int 
     pthread_t*     threads = (pthread_t*)malloc(nthreads * sizeof(pthread_t));
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
-    int numanodes          = 8;
+    int numanodes          = 1;
     int nthreads_each_node = nthreads / numanodes;
     for (int i = 0; i < nthreads; i++)
     {
@@ -130,24 +130,28 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, const Vector& y, int 
     for (int i = 0; i < nthreads_each_node; i++)
         for (int j = 0; j < numanodes; j++)
             p[i * numanodes + j].coreidx = i;
-    p->sub_col_ind = (int**)malloc(sizeof(int*) * nthreads);
-    p->sub_value   = (double**)malloc(sizeof(double*) * nthreads);
-    p->X           = (double**)malloc(sizeof(double*) * nthreads);
-    p->Y           = (double**)malloc(sizeof(double*) * nthreads);
+    // p->sub_col_ind = (int**)malloc(sizeof(int*) * nthreads);
+    // p->sub_value   = (double**)malloc(sizeof(double*) * nthreads);
+    // p->X           = (double**)malloc(sizeof(double*) * nthreads);
+    // p->Y           = (double**)malloc(sizeof(double*) * nthreads);
     for (int i = 0; i < nthreads; i++)
     {
-        p->sub_col_ind[i] = (int*)numa_alloc_onnode(sizeof(int) * A.nonzeros_in_row * A.nrow / nthreads, p[i].alloc);
-        p->sub_value[i]   = (double*)numa_alloc_onnode(sizeof(double) * A.nonzeros_in_row * A.nrow / nthreads, p[i].alloc);
-        p->X[i]           = (double*)numa_alloc_onnode(sizeof(double) * x.size, p[i].alloc);
-        p->Y[i]           = (double*)numa_alloc_onnode(sizeof(double) * y.size, p[i].alloc);
+        p[i].sub_col_ind = (int*)numa_alloc_onnode(sizeof(int) * A.nonzeros_in_row * A.nrow / nthreads, p[i].alloc);
+        p[i].sub_value   = (double*)numa_alloc_onnode(sizeof(double) * A.nonzeros_in_row * A.nrow / nthreads, p[i].alloc);
+        p[i].X           = (double*)numa_alloc_onnode(sizeof(double) * x.size, p[i].alloc);
+        p[i].Y           = (double*)numa_alloc_onnode(sizeof(double) * y.size, p[i].alloc);
     }
     int ntests = 1;
     for (int k = 0; k < ntests; k++)
     {
         for (int i = 0; i < nthreads; i++)
+        {
             pthread_create(&threads[i], &pthread_custom_attr, numaspmv, (void*)(p + i));
+        }
         for (int i = 0; i < nthreads; i++)
+        {
             pthread_join(threads[i], NULL);
+        }
     }
 }
 
@@ -155,7 +159,7 @@ void* numaspmv(void* args)
 {
     NumaNode* pn = (NumaNode*)args;
     int       me = pn->alloc;
-    // numa_run_on_node(me);
+    numa_run_on_node(me);
     // int     M               = pn->M;
     // int     nthreads        = pn->nthreads;
     // int     numanodes       = pn->numanodes;

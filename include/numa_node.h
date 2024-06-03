@@ -10,10 +10,10 @@ public:
     int      alloc;
     int      M;
     int      nonzeros_in_row;
-    int**    sub_col_ind;
-    double** sub_value;
-    double** X;
-    double** Y;
+    int*    sub_col_ind;
+    double* sub_value;
+    double* X;
+    double* Y;
 };
 
 #endif
