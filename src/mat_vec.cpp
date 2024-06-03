@@ -112,47 +112,47 @@ void ell_matvec(const ELL_Matrix& A, const Vector& x, const Vector& y)
 
 void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, const Vector& y, int nthreads)
 {
-    NumaNode*      p       = (NumaNode*)malloc(nthreads * sizeof(NumaNode));
-    pthread_t*     threads = (pthread_t*)malloc(nthreads * sizeof(pthread_t));
+    int numanodes          = 8;
+    int nthreads_each_node = nthreads / numanodes;
+
+    NumaNode*      p       = (NumaNode*)malloc(numanodes * sizeof(NumaNode));
+    pthread_t*     threads = (pthread_t*)malloc(numanodes * sizeof(pthread_t));
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
-    int numanodes          = 1;
-    int nthreads_each_node = nthreads / numanodes;
-    for (int i = 0; i < nthreads; i++)
+    for (int i = 0; i < numanodes; i++)
     {
-        p[i].alloc           = i % numanodes;  // numa节点号
-        p[i].numanodes       = numanodes;
-        p[i].nthreads        = nthreads;
+        p[i].alloc           = i;  // numa节点号
+        p[i].nthreads        = nthreads_each_node;
         p[i].nonzeros_in_row = A.nonzeros_in_row;
-        p[i].M               = A.nrow / nthreads;  // 每个numa节点分配的行数
+        p[i].M               = A.nrow / numanodes;  // 每个numa节点分配的行数
+        p[i].sub_col_ind     = (int*)numa_alloc_onnode(sizeof(int) * A.nonzeros_in_row * p[i].M, p[i].alloc);
+        p[i].sub_value       = (double*)numa_alloc_onnode(sizeof(double) * A.nonzeros_in_row * p[i].M, p[i].alloc);
+        p[i].X               = (double*)numa_alloc_onnode(sizeof(double) * x.size, p[i].alloc);
+        p[i].Y               = (double*)numa_alloc_onnode(sizeof(double) * p[i].M, p[i].alloc);
     }
-    // 每个numa节点分配相等数量的线程，编号都从0开始
-    for (int i = 0; i < nthreads_each_node; i++)
-        for (int j = 0; j < numanodes; j++)
-            p[i * numanodes + j].coreidx = i;
-    // p->sub_col_ind = (int**)malloc(sizeof(int*) * nthreads);
-    // p->sub_value   = (double**)malloc(sizeof(double*) * nthreads);
-    // p->X           = (double**)malloc(sizeof(double*) * nthreads);
-    // p->Y           = (double**)malloc(sizeof(double*) * nthreads);
-    for (int i = 0; i < nthreads; i++)
+    for (int i = 0; i < numanodes; i++)
     {
-        p[i].sub_col_ind = (int*)numa_alloc_onnode(sizeof(int) * A.nonzeros_in_row * A.nrow / nthreads, p[i].alloc);
-        p[i].sub_value   = (double*)numa_alloc_onnode(sizeof(double) * A.nonzeros_in_row * A.nrow / nthreads, p[i].alloc);
-        p[i].X           = (double*)numa_alloc_onnode(sizeof(double) * x.size, p[i].alloc);
-        p[i].Y           = (double*)numa_alloc_onnode(sizeof(double) * y.size, p[i].alloc);
+        memcpy(p[i].sub_col_ind, &A.col_ind[i * A.nonzeros_in_row * p[i].M], sizeof(int) * A.nonzeros_in_row * p[i].M);
+        memcpy(p[i].sub_value, &A.values[i * A.nonzeros_in_row * p[i].M], sizeof(double) * A.nonzeros_in_row * p[i].M);
+        memcpy(p[i].X, x.values, sizeof(double) * x.size);
+        memcpy(p[i].Y, &y.values[i * p[i].M], sizeof(double) * p[i].M);
     }
-    int ntests = 1;
+    int    ntests  = 10;
+    double t_begin = mytimer();
     for (int k = 0; k < ntests; k++)
     {
-        for (int i = 0; i < nthreads; i++)
+        for (int i = 0; i < numanodes; i++)
         {
-            pthread_create(&threads[i], &pthread_custom_attr, numaspmv, (void*)(p + i));
+            pthread_create(&threads[i], &pthread_custom_attr, numaspmv, (void*)&p[i]);
         }
-        for (int i = 0; i < nthreads; i++)
+        for (int i = 0; i < numanodes; i++)
         {
-            pthread_join(threads[i], NULL);
+            int rc = pthread_join(threads[i], NULL);
         }
     }
+    double t_end = mytimer();
+    double t_avg = (t_end - t_begin) / ntests;
+    printf("### ELL NUMA Compute Time = %.5f\n", t_avg);
 }
 
 void* numaspmv(void* args)
@@ -160,26 +160,25 @@ void* numaspmv(void* args)
     NumaNode* pn = (NumaNode*)args;
     int       me = pn->alloc;
     numa_run_on_node(me);
-    // int     M               = pn->M;
-    // int     nthreads        = pn->nthreads;
-    // int     numanodes       = pn->numanodes;
-    // int     coreidx         = pn->coreidx;
-    // int     threads_pernode = nthreads / numanodes;
-    // int     task            = ceil((double)M / (double)threads_pernode);
-    // int     start           = coreidx * task;
-    // int     end             = (coreidx + 1) * task > M ? M : (coreidx + 1) * task;
-    // int*    col_ind         = pn->sub_col_ind[me];
-    // double* values          = pn->sub_value[me];
-    // double* x               = pn->X[me];
-    // double* y               = pn->Y[me];
-    // for (int k = 0; k < pn->nonzeros_in_row; k++)
-    // {
-    //     for (int i = start; i < end; i++)
-    //     {
-    //         int col = col_ind[i + k * M];
-    //         y[i] += values[i + k * M] * x[col];
-    //     }
-    // }
+    int     M        = pn->M;
+    int     nthreads = pn->nthreads;
+    int*    col_ind  = pn->sub_col_ind;
+    double* values   = pn->sub_value;
+    double* x        = pn->X;
+    double* y        = pn->Y;
+
+    for (int k = 0; k < pn->nonzeros_in_row; k++)
+    {
+#ifdef USE_OPENMP
+#pragma omp parallel for num_threads(nthreads)
+#endif
+        for (int i = 0; i < pn->M; i++)
+        {
+            int col = col_ind[i + k * M];
+            y[i] += values[i + k * M] * x[col];
+        }
+    }
+    return NULL;
 }
 
 void csr_symgs(const CSR_Matrix& A, const Vector& r, const Vector& x)
