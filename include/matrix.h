@@ -98,4 +98,28 @@ public:
     void Free();
 };
 
+class Block_Matrix
+{
+public:
+    int nrow;
+    int ncol;
+    int nnz;
+    int nblocks;
+
+    int*     block_size;
+    int*     row_ind;
+    int*     col_ind;
+    double** values;
+
+    Block_Matrix();
+    Block_Matrix(int n, int m, int nnz, int nblocks, int* block_size, int* row_ind, int* col_ind, double** values);
+    Block_Matrix(const Block_Matrix& A);
+    Block_Matrix(const COO_Matrix& A);
+    ~Block_Matrix();
+    Block_Matrix& operator=(const Block_Matrix& A);
+    Block_Matrix& operator=(const COO_Matrix& A);
+
+    void Free();
+};
+
 #endif

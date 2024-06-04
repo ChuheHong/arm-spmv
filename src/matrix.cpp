@@ -619,3 +619,24 @@ void ELL_Matrix::Free()
     values          = 0;
     diagonal        = 0;
 }
+
+// ====================================================
+// ############### Block_Matrix Functions #############
+// ====================================================
+
+Block_Matrix::Block_Matrix() : nrow(0), ncol(0), nnz(0), nblocks(0), block_size(0), row_ind(0), col_ind(0), values(0) {}
+
+Block_Matrix::Block_Matrix(int _n, int _m, int _nnz, int _nblocks, int* _block_size, int* _row_ind, int* _col_ind, double** _values)
+    : nrow(_n), ncol(_m), nnz(_nnz), nblocks(_nblocks), block_size(_block_size), row_ind(_row_ind), col_ind(_col_ind), values(_values)
+{
+}
+
+Block_Matrix::Block_Matrix(const COO_Matrix& A)
+{
+    nrow    = A.nrow;
+    ncol    = A.ncol;
+    nnz     = A.nnz;
+    nblocks = 0;
+
+    
+}
