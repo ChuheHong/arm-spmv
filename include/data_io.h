@@ -13,6 +13,8 @@
 #include "matrix.h"
 #include "vector.h"
 
+
+
 void vec_read(const char* filename, Vector& x);
 void vec_write(const char* filename, const Vector& x);
 

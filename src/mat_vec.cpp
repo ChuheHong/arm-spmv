@@ -140,9 +140,6 @@ void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y)
         {
             for (int i = 0; i < nrow - offset; ++i)
             {
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
                 yv[i] += values[i * ndiags + d] * xv[i + offset];
             }
         }
@@ -150,9 +147,6 @@ void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y)
         {
             for (int i = -offset; i < nrow; ++i)
             {
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
                 yv[i] += values[i * ndiags + d] * xv[i + offset];
             }
         }
