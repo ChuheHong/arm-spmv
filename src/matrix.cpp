@@ -661,7 +661,7 @@ DIA_Matrix::DIA_Matrix(const COO_Matrix& A)
     nrow = A.nrow;
     ncol = A.ncol;
 
-    // Determine the number of diagonals and their offsets (simplistic and may not cover all cases).
+    // Determine the number of diagonals and their offsets
     std::vector<int> diag_offsets;
     for (int i = 0; i < A.nnz; ++i)
     {

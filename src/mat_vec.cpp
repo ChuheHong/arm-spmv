@@ -133,21 +133,14 @@ void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y)
 #ifdef USE_OPENMP
 #pragma omp parallel for
 #endif
-    for (int d = 0; d < ndiags; ++d)
+    for (int i = 0; i < nrow; ++i)
     {
-        int offset = offsets[d];
-        if (offset >= 0)
+        for (int d = 0; d < ndiags; ++d)
         {
-            for (int i = 0; i < nrow - offset; ++i)
+            int j = i + offsets[d];
+            if (j >= 0 && j < nrow)
             {
-                yv[i] += values[i * ndiags + d] * xv[i + offset];
-            }
-        }
-        else
-        {
-            for (int i = -offset; i < nrow; ++i)
-            {
-                yv[i] += values[i * ndiags + d] * xv[i + offset];
+                yv[i] += values[i * ndiags + d] * xv[j];
             }
         }
     }
