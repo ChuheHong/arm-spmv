@@ -32,12 +32,17 @@ void coo_matvec(const COO_Matrix& A, const Vector& x, const Vector& y)
     double* xv = x.values;
     double* yv = y.values;
 
-    for (int i = 0; i < nrow; i++)
-        yv[i] = 0.0;
-
-    for (int k = 0; k < nnz; k++)
+#ifdef USE_OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < nnz; i++)
     {
-        yv[row_ind[k]] += val[k] * xv[col_ind[k]];
+        int row = row_ind[i];
+        int col = col_ind[i];
+#ifdef USE_OPENMP
+#pragma omp atmoic
+#endif
+        yv[row] += val[i] * xv[col];
     }
     return;
 }
@@ -77,6 +82,9 @@ void csc_matvec(const CSC_Matrix& A, const Vector& x, const Vector& y)
     double* xv = x.values;
     double* yv = y.values;
 
+#ifdef USE_OPENMP
+#pragma omp parallel for
+#endif
     for (int i = 0; i < ncol; i++)
     {
         for (int j = col_ptr[i]; j < col_ptr[i + 1]; j++)
@@ -99,6 +107,9 @@ void ell_matvec(const ELL_Matrix& A, const Vector& x, const Vector& y)
 
     for (int k = 0; k < nonzeros_in_row; k++)
     {
+#ifdef USE_OPENMP
+#pragma omp parallel for
+#endif
         for (int i = 0; i < nrow; i++)
         {
             int curCol;
@@ -147,12 +158,12 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, const Vector& y, int 
         }
         for (int i = 0; i < numanodes; i++)
         {
-            int rc = pthread_join(threads[i], NULL);
+            pthread_join(threads[i], NULL);
         }
     }
     double t_end = mytimer();
     double t_avg = (t_end - t_begin) / ntests;
-    printf("### ELL NUMA Compute Time = %.5f\n", t_avg);
+    printf("### ELL NUMA GFLOPS = %.5f\n", 2 * A.nnz / t_avg / pow(10, 9));
 }
 
 void* numaspmv(void* args)

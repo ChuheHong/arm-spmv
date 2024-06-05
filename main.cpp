@@ -6,6 +6,7 @@
 #include "vec_vec.h"
 #include "vector.h"
 
+#include <math.h>
 #include <numa.h>
 #include <omp.h>
 #include <stdio.h>
@@ -46,21 +47,44 @@ int main(int argc, char* argv[])
         csr_matvec(B, x, y);
     double t_csr_end = mytimer();
     double t_csr     = (t_csr_end - t_csr_begin) / NUM_TEST;
-    printf("### CSR CPU Compute Time = %.5f\n", t_csr);
+    printf("### CSR CPU GFLOPS = %.5f\n", 2 * A.nnz / t_csr / pow(10, 9));
+
+    // CSC-SpMV
+    CSC_Matrix C(A);
+    y.Fill(0);
+    double t_csc_begin = mytimer();
+    for (int i = 0; i < NUM_TEST; i++)
+        csc_matvec(C, x, y);
+    double t_csc_end = mytimer();
+    double t_csc     = (t_csc_end - t_csc_begin) / NUM_TEST;
+    printf("### CSC CPU GFLOPS = %.5f\n", 2 * A.nnz / t_csc / pow(10, 9));
+
+    // COO-SpMV
+    y.Fill(0);
+    double t_coo_begin = mytimer();
+    for (int i = 0; i < NUM_TEST; i++)
+        coo_matvec(A, x, y);
+    double t_coo_end = mytimer();
+    double t_coo     = (t_coo_end - t_coo_begin) / NUM_TEST;
+    printf("### COO CPU GFLOPS = %.5f\n", 2 * A.nnz / t_coo / pow(10, 9));
 
     // ELL-SpMV
-    ELL_Matrix C(A);
+    ELL_Matrix D(A);
     y.Fill(0);
     double t_ell_begin = mytimer();
     for (int i = 0; i < NUM_TEST; i++)
-        ell_matvec(C, x, y);
+        ell_matvec(D, x, y);
     double t_ell_end = mytimer();
     double t_ell     = (t_ell_end - t_ell_begin) / NUM_TEST;
-    printf("### ELL CPU Compute Time = %.5f\n", t_ell);
+    printf("### ELL CPU GFLOPS = %.5f\n", 2 * A.nnz / t_ell / pow(10, 9));
+
+    // DIA-SpMV
+    DIA_Matrix E(A);
+    y.Fill(0);
 
     // ELL-SpMV-numa
     y.Fill(0);
-    ell_matvec_numa(C, x, y, nthreads);
+    ell_matvec_numa(D, x, y, nthreads);
 
     return 0;
 }

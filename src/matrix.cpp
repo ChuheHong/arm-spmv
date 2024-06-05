@@ -5,9 +5,10 @@
  *
  * Functions for Sparse Matrix Init.
  */
-#include <string.h>
-
 #include "matrix.h"
+#include <algorithm>
+#include <cstring>
+#include <vector>
 
 // ====================================================
 // ############### COO_Matrix Functions ###############
@@ -637,6 +638,131 @@ Block_Matrix::Block_Matrix(const COO_Matrix& A)
     ncol    = A.ncol;
     nnz     = A.nnz;
     nblocks = 0;
+}
 
-    
+// ====================================================
+// ############### DIA_Matrix Functions #############
+// ====================================================
+
+DIA_Matrix::DIA_Matrix() : nrow(0), ncol(0), ndiags(0), offsets(nullptr), values(nullptr) {}
+
+DIA_Matrix::DIA_Matrix(int n, int m, int ndiags, int* offsets, double* values) : nrow(n), ncol(m), ndiags(ndiags), offsets(offsets), values(values) {}
+
+DIA_Matrix::DIA_Matrix(const DIA_Matrix& A) : nrow(A.nrow), ncol(A.ncol), ndiags(A.ndiags)
+{
+    offsets = new int[ndiags];
+    values  = new double[nrow * ndiags];
+    std::copy(A.offsets, A.offsets + ndiags, offsets);
+    std::copy(A.values, A.values + nrow * ndiags, values);
+}
+
+DIA_Matrix::DIA_Matrix(const COO_Matrix& A)
+{
+    nrow = A.nrow;
+    ncol = A.ncol;
+
+    // Determine the number of diagonals and their offsets (simplistic and may not cover all cases).
+    std::vector<int> diag_offsets;
+    for (int i = 0; i < A.nnz; ++i)
+    {
+        int offset = A.col_ind[i] - A.row_ind[i];
+        if (std::find(diag_offsets.begin(), diag_offsets.end(), offset) == diag_offsets.end())
+        {
+            diag_offsets.push_back(offset);
+        }
+    }
+
+    ndiags  = diag_offsets.size();
+    offsets = new int[ndiags];
+    std::copy(diag_offsets.begin(), diag_offsets.end(), offsets);
+
+    values = new double[nrow * ndiags]();
+    for (int i = 0; i < A.nnz; ++i)
+    {
+        int row    = A.row_ind[i];
+        int col    = A.col_ind[i];
+        int offset = col - row;
+        for (int d = 0; d < ndiags; ++d)
+        {
+            if (offsets[d] == offset)
+            {
+                values[row * ndiags + d] = A.values[i];
+                break;
+            }
+        }
+    }
+}
+
+DIA_Matrix::~DIA_Matrix()
+{
+    Free();
+}
+
+DIA_Matrix& DIA_Matrix::operator=(const DIA_Matrix& A)
+{
+    if (this != &A)
+    {
+        Free();
+        nrow   = A.nrow;
+        ncol   = A.ncol;
+        ndiags = A.ndiags;
+
+        offsets = new int[ndiags];
+        values  = new double[nrow * ndiags];
+        std::copy(A.offsets, A.offsets + ndiags, offsets);
+        std::copy(A.values, A.values + nrow * ndiags, values);
+    }
+    return *this;
+}
+
+DIA_Matrix& DIA_Matrix::operator=(const COO_Matrix& A)
+{
+    Free();
+    nrow = A.nrow;
+    ncol = A.ncol;
+
+    std::vector<int> diag_offsets;
+    for (int i = 0; i < A.nnz; ++i)
+    {
+        int offset = A.col_ind[i] - A.row_ind[i];
+        if (std::find(diag_offsets.begin(), diag_offsets.end(), offset) == diag_offsets.end())
+        {
+            diag_offsets.push_back(offset);
+        }
+    }
+
+    ndiags  = diag_offsets.size();
+    offsets = new int[ndiags];
+    std::copy(diag_offsets.begin(), diag_offsets.end(), offsets);
+
+    values = new double[nrow * ndiags]();
+    for (int i = 0; i < A.nnz; ++i)
+    {
+        int row    = A.row_ind[i];
+        int col    = A.col_ind[i];
+        int offset = col - row;
+        for (int d = 0; d < ndiags; ++d)
+        {
+            if (offsets[d] == offset)
+            {
+                values[row * ndiags + d] = A.values[i];
+                break;
+            }
+        }
+    }
+    return *this;
+}
+
+void DIA_Matrix::Free()
+{
+    if (offsets)
+    {
+        delete[] offsets;
+        offsets = nullptr;
+    }
+    if (values)
+    {
+        delete[] values;
+        values = nullptr;
+    }
 }
