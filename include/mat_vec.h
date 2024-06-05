@@ -11,11 +11,12 @@
 #include "matrix.h"
 #include "vector.h"
 
-void coo_matvec(const COO_Matrix& A, const Vector& x, const Vector& y);
-void csr_matvec(const CSR_Matrix& A, const Vector& x, const Vector& y);
-void csc_matvec(const CSC_Matrix& A, const Vector& x, const Vector& y);
-void ell_matvec(const ELL_Matrix& A, const Vector& x, const Vector& y);
-void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, const Vector& y, int nthreads);
+void coo_matvec(const COO_Matrix& A, const Vector& x, Vector& y);
+void csr_matvec(const CSR_Matrix& A, const Vector& x, Vector& y);
+void csc_matvec(const CSC_Matrix& A, const Vector& x, Vector& y);
+void ell_matvec(const ELL_Matrix& A, const Vector& x, Vector& y);
+void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y);
+void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthreads);
 
 void csr_symgs(const CSR_Matrix& A, const Vector& r, const Vector& x);
 void ell_symgs(const ELL_Matrix& A, const Vector& r, const Vector& x);

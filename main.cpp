@@ -81,6 +81,12 @@ int main(int argc, char* argv[])
     // DIA-SpMV
     DIA_Matrix E(A);
     y.Fill(0);
+    double t_dia_begin = mytimer();
+    for (int i = 0; i < NUM_TEST; i++)
+        dia_matvec(E, x, y);
+    double t_dia_end = mytimer();
+    double t_dia     = (t_dia_end - t_dia_begin) / NUM_TEST;
+    printf("### DIA CPU GFLOPS = %.5f\n", 2 * A.nnz / t_dia / pow(10, 9));
 
     // ELL-SpMV-numa
     y.Fill(0);

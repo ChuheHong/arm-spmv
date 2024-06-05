@@ -21,7 +21,7 @@
 #include <omp.h>
 #endif
 
-void coo_matvec(const COO_Matrix& A, const Vector& x, const Vector& y)
+void coo_matvec(const COO_Matrix& A, const Vector& x, Vector& y)
 {
     int     nrow    = A.nrow;
     int     nnz     = A.nnz;
@@ -47,7 +47,7 @@ void coo_matvec(const COO_Matrix& A, const Vector& x, const Vector& y)
     return;
 }
 
-void csr_matvec(const CSR_Matrix& A, const Vector& x, const Vector& y)
+void csr_matvec(const CSR_Matrix& A, const Vector& x, Vector& y)
 {
     int     nrow    = A.nrow;
     int*    row_ptr = A.row_ptr;
@@ -72,7 +72,7 @@ void csr_matvec(const CSR_Matrix& A, const Vector& x, const Vector& y)
     return;
 }
 
-void csc_matvec(const CSC_Matrix& A, const Vector& x, const Vector& y)
+void csc_matvec(const CSC_Matrix& A, const Vector& x, Vector& y)
 {
     int     ncol    = A.ncol;
     int*    row_ind = A.row_ind;
@@ -95,7 +95,7 @@ void csc_matvec(const CSC_Matrix& A, const Vector& x, const Vector& y)
     return;
 }
 
-void ell_matvec(const ELL_Matrix& A, const Vector& x, const Vector& y)
+void ell_matvec(const ELL_Matrix& A, const Vector& x, Vector& y)
 {
     int     nrow            = A.nrow;
     int     nonzeros_in_row = A.nonzeros_in_row;
@@ -121,7 +121,45 @@ void ell_matvec(const ELL_Matrix& A, const Vector& x, const Vector& y)
     return;
 }
 
-void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, const Vector& y, int nthreads)
+void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y)
+{
+    int     nrow    = A.nrow;
+    int     ndiags  = A.ndiags;
+    int*    offsets = A.offsets;
+    double* values  = A.values;
+    double* xv      = x.values;
+    double* yv      = y.values;
+
+#ifdef USE_OPENMP
+#pragma omp parallel for
+#endif
+    for (int d = 0; d < ndiags; ++d)
+    {
+        int offset = offsets[d];
+        if (offset >= 0)
+        {
+            for (int i = 0; i < nrow - offset; ++i)
+            {
+#ifdef USE_OPENMP
+#pragma omp atomic
+#endif
+                yv[i] += values[i * ndiags + d] * xv[i + offset];
+            }
+        }
+        else
+        {
+            for (int i = -offset; i < nrow; ++i)
+            {
+#ifdef USE_OPENMP
+#pragma omp atomic
+#endif
+                yv[i] += values[i * ndiags + d] * xv[i + offset];
+            }
+        }
+    }
+}
+
+void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthreads)
 {
     int numanodes          = 8;
     int nthreads_each_node = nthreads / numanodes;
