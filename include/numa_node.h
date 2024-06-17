@@ -1,7 +1,7 @@
 #ifndef NUMA_NODE_H
 #define NUMA_NODE_H
 
-class NumaNode
+class NumaNode4ELL
 {
 public:
     int     nthreads;

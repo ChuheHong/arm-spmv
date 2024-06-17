@@ -13,7 +13,7 @@
 #include <string.h>
 #include <time.h>
 
-#define NUM_TEST 10
+#define NUM_TEST 50
 
 int main(int argc, char* argv[])
 {
@@ -30,17 +30,26 @@ int main(int argc, char* argv[])
 #endif
 
     COO_Matrix A;
+    Vector     x, y;
     coo_read(file, A);
     int nrow, ncol;
     nrow = A.nrow;
     ncol = A.ncol;
-
-    // CSR-SpMV
-    CSR_Matrix B(A);
-    Vector     x, y;
     x.Resize(ncol);
     y.Resize(nrow);
     x.FillRandom();
+
+    // COO-SpMV
+    y.Fill(0);
+    double t_coo_begin = mytimer();
+    for (int i = 0; i < NUM_TEST; i++)
+        coo_matvec(A, x, y);
+    double t_coo_end = mytimer();
+    double t_coo     = ((t_coo_end - t_coo_begin) * 1000.0 + (t_coo_end - t_coo_begin) / 1000.0) / NUM_TEST;
+    printf("### COO CPU GFLOPS = %.5f\n", 2 * A.nnz / t_coo / pow(10, 6));
+
+    // CSR-SpMV
+    CSR_Matrix B(A);
     y.Fill(0);
     double t_csr_begin = mytimer();
     for (int i = 0; i < NUM_TEST; i++)
@@ -58,15 +67,6 @@ int main(int argc, char* argv[])
     double t_csc_end = mytimer();
     double t_csc     = ((t_csc_end - t_csc_begin) * 1000.0 + (t_csc_end - t_csc_begin) / 1000.0) / NUM_TEST;
     printf("### CSC CPU GFLOPS = %.5f\n", 2 * A.nnz / t_csc / pow(10, 6));
-
-    // COO-SpMV
-    y.Fill(0);
-    double t_coo_begin = mytimer();
-    for (int i = 0; i < NUM_TEST; i++)
-        coo_matvec(A, x, y);
-    double t_coo_end = mytimer();
-    double t_coo     = ((t_coo_end - t_coo_begin) * 1000.0 + (t_coo_end - t_coo_begin) / 1000.0) / NUM_TEST;
-    printf("### COO CPU GFLOPS = %.5f\n", 2 * A.nnz / t_coo / pow(10, 6));
 
     // ELL-SpMV
     ELL_Matrix D(A);

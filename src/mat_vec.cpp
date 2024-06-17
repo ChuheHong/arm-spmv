@@ -151,7 +151,7 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthrea
     int numanodes          = 8;
     int nthreads_each_node = nthreads / numanodes;
 
-    NumaNode*      p       = (NumaNode*)malloc(numanodes * sizeof(NumaNode));
+    NumaNode4ELL*  p       = (NumaNode4ELL*)malloc(numanodes * sizeof(NumaNode4ELL));
     pthread_t*     threads = (pthread_t*)malloc(numanodes * sizeof(pthread_t));
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
@@ -179,7 +179,7 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthrea
     {
         for (int i = 0; i < numanodes; i++)
         {
-            pthread_create(&threads[i], &pthread_custom_attr, numaspmv, (void*)&p[i]);
+            pthread_create(&threads[i], &pthread_custom_attr, numaspmv4ell, (void*)&p[i]);
         }
         for (int i = 0; i < numanodes; i++)
         {
@@ -187,14 +187,14 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthrea
         }
     }
     double t_end = mytimer();
-    double t_avg = (t_end - t_begin) / ntests;
-    printf("### ELL NUMA GFLOPS = %.5f\n", 2 * A.nnz / t_avg / pow(10, 9));
+    double t_avg = ((t_end - t_begin) * 1000.0 + (t_end - t_begin) / 1000.0) / ntests;
+    printf("### ELL NUMA GFLOPS = %.5f\n", 2 * A.nnz / t_avg / pow(10, 6));
 }
 
-void* numaspmv(void* args)
+void* numaspmv4ell(void* args)
 {
-    NumaNode* pn = (NumaNode*)args;
-    int       me = pn->alloc;
+    NumaNode4ELL* pn = (NumaNode4ELL*)args;
+    int           me = pn->alloc;
     numa_run_on_node(me);
     int     M        = pn->M;
     int     nthreads = pn->nthreads;
