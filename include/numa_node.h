@@ -33,13 +33,24 @@ public:
 
 class NumaNode4CSC
 {
+public:
+    int     alloc;
+    int     nnz;
+    int     core_ind;
+    int     start_col;
+    int     cols_per_node;
+    int*    sub_col_ptr;
+    int*    sub_row_ind;
+    double* sub_values;
+    double* X;
+    double* Y;
 };
 
 class NumaNode4ELL
 {
 public:
-    int     nthreads;
     int     alloc;
+    int     core_ind;
     int     rows_per_node;
     int     nonzeros_in_row;
     int*    sub_col_ind;
