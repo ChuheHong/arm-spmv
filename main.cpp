@@ -80,13 +80,13 @@ int main(int argc, char* argv[])
 
     // DIA-SpMV
     DIA_Matrix E(A);
-    y.Fill(0);
+    /* y.Fill(0);
     double t_dia_begin = mytimer();
     for (int i = 0; i < NUM_TEST; i++)
         dia_matvec(E, x, y);
     double t_dia_end = mytimer();
     double t_dia     = ((t_dia_end - t_dia_begin) * 1000.0 + (t_dia_end - t_dia_begin) / 1000.0) / NUM_TEST;
-    printf("### DIA CPU GFLOPS = %.5f\n", 2 * A.nnz / t_dia / pow(10, 6));
+    printf("### DIA CPU GFLOPS = %.5f\n", 2 * A.nnz / t_dia / pow(10, 6)); */
 
     // COO-SpMV-numa
     y.Fill(0);
@@ -105,8 +105,8 @@ int main(int argc, char* argv[])
     ell_matvec_numa(D, x, y, nthreads);
 
     // DIA-SpMV-numa
-    y.Fill(0);
-    dia_matvec_numa(E, x, y, nthreads);
+    /* y.Fill(0);
+    dia_matvec_numa(E, x, y, nthreads); */
 
     return 0;
 }

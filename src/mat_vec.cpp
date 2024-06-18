@@ -169,12 +169,20 @@ void coo_matvec_numa(const COO_Matrix& A, const Vector& x, Vector& y, int nthrea
             end_row = y.size;
         }
 
-        int* row_begin     = A.row_ind;
-        int* row_end       = A.row_ind + A.nnz;
-        int* nnz_start_ptr = std::lower_bound(row_begin, row_end, start_row);
-        int* nnz_end_ptr   = std::lower_bound(row_begin, row_end, end_row);
-        int  nnz_start_idx = nnz_start_ptr - row_begin;
-        int  nnz_end_idx   = nnz_end_ptr - row_begin;
+        int nnz_start_idx = -1;
+        int nnz_end_idx   = A.nnz;
+        for (int j = 0; j < A.nnz; j++)
+        {
+            if (A.row_ind[j] >= start_row && nnz_start_idx == -1)
+            {
+                nnz_start_idx = j;
+            }
+            if (A.row_ind[j] >= end_row)
+            {
+                nnz_end_idx = j;
+                break;
+            }
+        }
 
         p[i].nnz           = nnz_end_idx - nnz_start_idx;
         p[i].start_row     = start_row;
