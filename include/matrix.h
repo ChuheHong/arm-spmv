@@ -135,10 +135,10 @@ public:
     DIA_Matrix();
     DIA_Matrix(int n, int m, int ndiags, int* offsets, double* values);
     DIA_Matrix(const DIA_Matrix& A);
-    DIA_Matrix(const COO_Matrix& A);
+    DIA_Matrix(const CSR_Matrix& A);
     ~DIA_Matrix();
     DIA_Matrix& operator=(const DIA_Matrix& A);
-    DIA_Matrix& operator=(const COO_Matrix& A);
+    DIA_Matrix& operator=(const CSR_Matrix& A);
 
     void Free();
 };

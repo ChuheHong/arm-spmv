@@ -656,43 +656,6 @@ DIA_Matrix::DIA_Matrix(const DIA_Matrix& A) : nrow(A.nrow), ncol(A.ncol), ndiags
     std::copy(A.values, A.values + nrow * ndiags, values);
 }
 
-DIA_Matrix::DIA_Matrix(const COO_Matrix& A)
-{
-    nrow = A.nrow;
-    ncol = A.ncol;
-
-    // Determine the number of diagonals and their offsets
-    std::vector<int> diag_offsets;
-    for (int i = 0; i < A.nnz; ++i)
-    {
-        int offset = A.col_ind[i] - A.row_ind[i];
-        if (std::find(diag_offsets.begin(), diag_offsets.end(), offset) == diag_offsets.end())
-        {
-            diag_offsets.push_back(offset);
-        }
-    }
-
-    ndiags  = diag_offsets.size();
-    offsets = new int[ndiags];
-    std::copy(diag_offsets.begin(), diag_offsets.end(), offsets);
-
-    values = new double[nrow * ndiags]();
-    for (int i = 0; i < A.nnz; ++i)
-    {
-        int row    = A.row_ind[i];
-        int col    = A.col_ind[i];
-        int offset = col - row;
-        for (int d = 0; d < ndiags; ++d)
-        {
-            if (offsets[d] == offset)
-            {
-                values[row * ndiags + d] = A.values[i];
-                break;
-            }
-        }
-    }
-}
-
 DIA_Matrix::~DIA_Matrix()
 {
     Free();
@@ -715,41 +678,115 @@ DIA_Matrix& DIA_Matrix::operator=(const DIA_Matrix& A)
     return *this;
 }
 
-DIA_Matrix& DIA_Matrix::operator=(const COO_Matrix& A)
+DIA_Matrix::DIA_Matrix(const CSR_Matrix& A)
 {
-    Free();
-    nrow = A.nrow;
-    ncol = A.ncol;
+    int  num_diagonals = 0;
+    int* diag_map      = (int*)malloc((A.nrow + A.ncol - 1) * sizeof(int));
+    memset(diag_map, 0, (A.nrow + A.ncol - 1) * sizeof(int));
 
-    std::vector<int> diag_offsets;
-    for (int i = 0; i < A.nnz; ++i)
+    for (int i = 0; i < A.nrow; ++i)
     {
-        int offset = A.col_ind[i] - A.row_ind[i];
-        if (std::find(diag_offsets.begin(), diag_offsets.end(), offset) == diag_offsets.end())
+        for (int jj = A.row_ptr[i]; jj < A.row_ptr[i + 1]; ++jj)
         {
-            diag_offsets.push_back(offset);
-        }
-    }
+            int j         = A.col_ind[jj];
+            int map_index = (A.nrow - i) + j;  // Calculate the diagonal index
 
-    ndiags  = diag_offsets.size();
-    offsets = new int[ndiags];
-    std::copy(diag_offsets.begin(), diag_offsets.end(), offsets);
-
-    values = new double[nrow * ndiags]();
-    for (int i = 0; i < A.nnz; ++i)
-    {
-        int row    = A.row_ind[i];
-        int col    = A.col_ind[i];
-        int offset = col - row;
-        for (int d = 0; d < ndiags; ++d)
-        {
-            if (offsets[d] == offset)
+            if (diag_map[map_index] == 0)
             {
-                values[row * ndiags + d] = A.values[i];
-                break;
+                diag_map[map_index] = 1;
+                num_diagonals++;
             }
         }
     }
+
+    nrow    = A.nrow;
+    ncol    = A.ncol;
+    ndiags  = num_diagonals;
+    offsets = (int*)malloc(num_diagonals * sizeof(int));
+    values  = (double*)malloc(A.nrow * num_diagonals * sizeof(double));
+
+    for (int n = 0, diag = 0; n < (A.nrow + A.ncol - 1); ++n)
+    {
+        if (diag_map[n] == 1)
+        {
+            diag_map[n]   = diag;
+            offsets[diag] = n - A.nrow;
+            diag++;
+        }
+    }
+
+    memset(values, 0, A.nrow * num_diagonals * sizeof(double));
+
+    for (int i = 0; i < A.nrow; ++i)
+    {
+        for (int jj = A.row_ptr[i]; jj < A.row_ptr[i + 1]; ++jj)
+        {
+            int j         = A.col_ind[jj];
+            int map_index = (A.nrow - i) + j;
+            int diag      = diag_map[map_index];
+
+            values[i * num_diagonals + diag] = A.values[jj];
+        }
+    }
+
+    free(diag_map);
+}
+
+DIA_Matrix& DIA_Matrix::operator=(const CSR_Matrix& A)
+{
+    Free();
+
+    int  num_diagonals = 0;
+    int* diag_map      = (int*)malloc((A.nrow + A.ncol - 1) * sizeof(int));
+    memset(diag_map, 0, (A.nrow + A.ncol - 1) * sizeof(int));
+
+    for (int i = 0; i < A.nrow; ++i)
+    {
+        for (int jj = A.row_ptr[i]; jj < A.row_ptr[i + 1]; ++jj)
+        {
+            int j         = A.col_ind[jj];
+            int map_index = (A.nrow - i) + j;
+
+            if (diag_map[map_index] == 0)
+            {
+                diag_map[map_index] = 1;
+                num_diagonals++;
+            }
+        }
+    }
+
+    nrow    = A.nrow;
+    ncol    = A.ncol;
+    ndiags  = num_diagonals;
+    offsets = (int*)malloc(num_diagonals * sizeof(int));
+    values  = (double*)malloc(A.nrow * num_diagonals * sizeof(double));
+
+    for (int n = 0, diag = 0; n < (A.nrow + A.ncol - 1); ++n)
+    {
+        if (diag_map[n] == 1)
+        {
+            diag_map[n]   = diag;
+            offsets[diag] = n - A.nrow;
+            diag++;
+        }
+    }
+
+    memset(values, 0, A.nrow * num_diagonals * sizeof(double));
+
+    for (int i = 0; i < A.nrow; ++i)
+    {
+        for (int jj = A.row_ptr[i]; jj < A.row_ptr[i + 1]; ++jj)
+        {
+            int j         = A.col_ind[jj];
+            int map_index = (A.nrow - i) + j;  // Calculate the diagonal index
+            int diag      = diag_map[map_index];
+
+            values[i * num_diagonals + diag] = A.values[jj];
+        }
+    }
+
+    free(diag_map);
+
     return *this;
 }
 
