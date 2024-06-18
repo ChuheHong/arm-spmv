@@ -88,9 +88,25 @@ int main(int argc, char* argv[])
     double t_dia     = ((t_dia_end - t_dia_begin) * 1000.0 + (t_dia_end - t_dia_begin) / 1000.0) / NUM_TEST;
     printf("### DIA CPU GFLOPS = %.5f\n", 2 * A.nnz / t_dia / pow(10, 6));
 
+    // COO-SpMV-numa
+    y.Fill(0);
+    coo_matvec_numa(A, x, y, nthreads);
+
+    // CSR-SpMV-numa
+    y.Fill(0);
+    csr_matvec_numa(B, x, y, nthreads);
+
+    // CSC-SpMV-numa
+    y.Fill(0);
+    csc_matvec_numa(C, x, y, nthreads);
+
     // ELL-SpMV-numa
     y.Fill(0);
     ell_matvec_numa(D, x, y, nthreads);
+
+    // DIA-SpMV-numa
+    y.Fill(0);
+    dia_matvec_numa(E, x, y, nthreads);
 
     return 0;
 }

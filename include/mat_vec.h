@@ -23,9 +23,10 @@ void csc_matvec_numa(const CSC_Matrix& A, const Vector& x, Vector& y, int nthrea
 void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthreads);
 void dia_matvec_numa(const DIA_Matrix& A, const Vector& x, Vector& y, int nthreads);
 
-void csr_symgs(const CSR_Matrix& A, const Vector& r, const Vector& x);
-void ell_symgs(const ELL_Matrix& A, const Vector& r, const Vector& x);
-
+void* numaspmv4coo(void* args);
+void* numaspmv4csr(void* args);
+void* numaspmv4csc(void* args);
 void* numaspmv4ell(void* args);
+void* numaspmv4dia(void* args);
 
 #endif

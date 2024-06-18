@@ -5,6 +5,7 @@
  *
  * Functions for Matrix and Vector Operations.
  */
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cmath>
@@ -146,6 +147,73 @@ void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y)
     }
 }
 
+void coo_matvec_numa(const COO_Matrix& A, const Vector& x, Vector& y, int nthreads)
+{
+    int numanodes          = 8;
+    int nthreads_each_node = nthreads / numanodes;
+    int rows_per_node      = y.size / numanodes;
+
+    NumaNode4COO*  p       = (NumaNode4COO*)malloc(numanodes * sizeof(NumaNode4COO));
+    pthread_t*     threads = (pthread_t*)malloc(numanodes * sizeof(pthread_t));
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_init(&pthread_custom_attr);
+
+    for (int i = 0; i < numanodes; i++)
+    {
+        p[i].alloc    = i;
+        p[i].nthreads = nthreads_each_node;
+        int start_row = i * rows_per_node;
+        int end_row   = (i + 1) * rows_per_node;
+        if (i == numanodes - 1)
+        {
+            end_row = y.size;
+        }
+
+        int* row_begin     = A.row_ind;
+        int* row_end       = A.row_ind + A.nnz;
+        int* nnz_start_ptr = std::lower_bound(row_begin, row_end, start_row);
+        int* nnz_end_ptr   = std::lower_bound(row_begin, row_end, end_row);
+        int  nnz_start_idx = nnz_start_ptr - row_begin;
+        int  nnz_end_idx   = nnz_end_ptr - row_begin;
+
+        p[i].nnz           = nnz_end_idx - nnz_start_idx;
+        p[i].start_row     = start_row;
+        p[i].rows_per_node = end_row - start_row;
+        p[i].sub_row_ind   = (int*)numa_alloc_onnode(sizeof(int) * p[i].nnz, p[i].alloc);
+        p[i].sub_col_ind   = (int*)numa_alloc_onnode(sizeof(int) * p[i].nnz, p[i].alloc);
+        p[i].sub_values    = (double*)numa_alloc_onnode(sizeof(double) * p[i].nnz, p[i].alloc);
+        p[i].X             = (double*)numa_alloc_onnode(sizeof(double) * x.size, p[i].alloc);
+        p[i].Y             = (double*)numa_alloc_onnode(sizeof(double) * rows_per_node, p[i].alloc);
+
+        memcpy(p[i].sub_row_ind, &A.row_ind[nnz_start_idx], sizeof(int) * p[i].nnz);
+        memcpy(p[i].sub_col_ind, &A.col_ind[nnz_start_idx], sizeof(int) * p[i].nnz);
+        memcpy(p[i].sub_values, &A.values[nnz_start_idx], sizeof(double) * p[i].nnz);
+        memcpy(p[i].X, x.values, sizeof(double) * x.size);
+        memcpy(p[i].Y, &y.values[start_row], sizeof(double) * (end_row - start_row));
+    }
+
+    int    NTESTS  = 50;
+    double t_begin = mytimer();
+    for (int k = 0; k < NTESTS; k++)
+    {
+        for (int i = 0; i < numanodes; i++)
+        {
+            pthread_create(&threads[i], &pthread_custom_attr, numaspmv4coo, (void*)&p[i]);
+        }
+        for (int i = 0; i < numanodes; i++)
+        {
+            pthread_join(threads[i], NULL);
+        }
+    }
+    double t_end = mytimer();
+    double t_avg = ((t_end - t_begin) * 1000.0 + (t_end - t_begin) / 1000.0) / NTESTS;
+    printf("### COO NUMA GFLOPS = %.5f\n", 2 * A.nnz / t_avg / pow(10, 6));
+}
+
+void csr_matvec_numa(const CSR_Matrix& A, const Vector& x, Vector& y, int nthreads) {}
+
+void csc_matvec_numa(const CSC_Matrix& A, const Vector& x, Vector& y, int nthreads) {}
+
 void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthreads)
 {
     int numanodes          = 8;
@@ -160,22 +228,22 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthrea
         p[i].alloc           = i;  // numa节点号
         p[i].nthreads        = nthreads_each_node;
         p[i].nonzeros_in_row = A.nonzeros_in_row;
-        p[i].M               = A.nrow / numanodes;  // 每个numa节点分配的行数
-        p[i].sub_col_ind     = (int*)numa_alloc_onnode(sizeof(int) * A.nonzeros_in_row * p[i].M, p[i].alloc);
-        p[i].sub_value       = (double*)numa_alloc_onnode(sizeof(double) * A.nonzeros_in_row * p[i].M, p[i].alloc);
+        p[i].rows_per_node   = A.nrow / numanodes;  // 每个numa节点分配的行数
+        p[i].sub_col_ind     = (int*)numa_alloc_onnode(sizeof(int) * A.nonzeros_in_row * p[i].rows_per_node, p[i].alloc);
+        p[i].sub_values      = (double*)numa_alloc_onnode(sizeof(double) * A.nonzeros_in_row * p[i].rows_per_node, p[i].alloc);
         p[i].X               = (double*)numa_alloc_onnode(sizeof(double) * x.size, p[i].alloc);
-        p[i].Y               = (double*)numa_alloc_onnode(sizeof(double) * p[i].M, p[i].alloc);
+        p[i].Y               = (double*)numa_alloc_onnode(sizeof(double) * p[i].rows_per_node, p[i].alloc);
     }
     for (int i = 0; i < numanodes; i++)
     {
-        memcpy(p[i].sub_col_ind, &A.col_ind[i * A.nonzeros_in_row * p[i].M], sizeof(int) * A.nonzeros_in_row * p[i].M);
-        memcpy(p[i].sub_value, &A.values[i * A.nonzeros_in_row * p[i].M], sizeof(double) * A.nonzeros_in_row * p[i].M);
+        memcpy(p[i].sub_col_ind, &A.col_ind[i * A.nonzeros_in_row * p[i].rows_per_node], sizeof(int) * A.nonzeros_in_row * p[i].rows_per_node);
+        memcpy(p[i].sub_values, &A.values[i * A.nonzeros_in_row * p[i].rows_per_node], sizeof(double) * A.nonzeros_in_row * p[i].rows_per_node);
         memcpy(p[i].X, x.values, sizeof(double) * x.size);
-        memcpy(p[i].Y, &y.values[i * p[i].M], sizeof(double) * p[i].M);
+        memcpy(p[i].Y, &y.values[i * p[i].rows_per_node], sizeof(double) * p[i].rows_per_node);
     }
-    int    ntests  = 10;
+    int    NTESTS  = 50;
     double t_begin = mytimer();
-    for (int k = 0; k < ntests; k++)
+    for (int k = 0; k < NTESTS; k++)
     {
         for (int i = 0; i < numanodes; i++)
         {
@@ -187,19 +255,55 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthrea
         }
     }
     double t_end = mytimer();
-    double t_avg = ((t_end - t_begin) * 1000.0 + (t_end - t_begin) / 1000.0) / ntests;
+    double t_avg = ((t_end - t_begin) * 1000.0 + (t_end - t_begin) / 1000.0) / NTESTS;
     printf("### ELL NUMA GFLOPS = %.5f\n", 2 * A.nnz / t_avg / pow(10, 6));
 }
+
+void dia_matvec_numa(const DIA_Matrix& A, const Vector& x, Vector& y, int nthreads) {}
+
+void* numaspmv4coo(void* args)
+{
+    NumaNode4COO* pn = (NumaNode4COO*)args;
+    int           me = pn->alloc;
+    numa_run_on_node(me);
+    int     nnz           = pn->nnz;
+    int     nthreads      = pn->nthreads;
+    int*    row_ind       = pn->sub_row_ind;
+    int*    col_ind       = pn->sub_col_ind;
+    int     rows_per_node = pn->rows_per_node;
+    int     start_row     = pn->start_row;
+    double* values        = pn->sub_values;
+    double* x             = pn->X;
+    double* y             = pn->Y;
+
+#ifdef USE_OPENMP
+#pragma omp parallel for num_threads(nthreads)
+#endif
+    for (int i = 0; i < nnz; i++)
+    {
+        int row = row_ind[i] - start_row;  // Adjust row index to local y
+        int col = col_ind[i];
+#ifdef USE_OPENMP
+#pragma omp atomic
+#endif
+        y[row] += values[i] * x[col];
+    }
+    return NULL;
+}
+
+void* numaspmv4csr(void* args) {}
+
+void* numaspmv4csc(void* args) {}
 
 void* numaspmv4ell(void* args)
 {
     NumaNode4ELL* pn = (NumaNode4ELL*)args;
     int           me = pn->alloc;
     numa_run_on_node(me);
-    int     M        = pn->M;
+    int     nrow     = pn->rows_per_node;
     int     nthreads = pn->nthreads;
     int*    col_ind  = pn->sub_col_ind;
-    double* values   = pn->sub_value;
+    double* values   = pn->sub_values;
     double* x        = pn->X;
     double* y        = pn->Y;
 
@@ -208,100 +312,13 @@ void* numaspmv4ell(void* args)
 #ifdef USE_OPENMP
 #pragma omp parallel for num_threads(nthreads)
 #endif
-        for (int i = 0; i < pn->M; i++)
+        for (int i = 0; i < pn->rows_per_node; i++)
         {
-            int col = col_ind[i + k * M];
-            y[i] += values[i + k * M] * x[col];
+            int col = col_ind[i + k * nrow];
+            y[i] += values[i + k * nrow] * x[col];
         }
     }
     return NULL;
 }
 
-void csr_symgs(const CSR_Matrix& A, const Vector& r, const Vector& x)
-{
-    assert(x.size == A.ncol);
-    int     nrow    = A.nrow;
-    int*    row_ptr = A.row_ptr;
-    int*    col_ind = A.col_ind;
-    double* val     = A.values;
-    double* diag    = A.diagonal;
-
-    double* rv = r.values;
-    double* xv = x.values;
-
-    // the forward sweep
-    for (int i = 0; i < nrow; i++)
-    {
-        double sum = rv[i];
-        for (int j = row_ptr[i]; j < row_ptr[i + 1]; j++)
-        {
-            sum -= val[j] * xv[col_ind[j]];
-        }
-        sum += xv[i] * diag[i];
-        xv[i] = sum / diag[i];
-    }
-
-    // the backward sweep
-    for (int i = nrow - 1; i >= 0; i--)
-    {
-        double sum = rv[i];
-        for (int j = row_ptr[i]; j < row_ptr[i + 1]; j++)
-        {
-            sum -= val[j] * xv[col_ind[j]];
-        }
-        sum += xv[i] * diag[i];
-        xv[i] = sum / diag[i];
-    }
-    return;
-}
-
-void ell_symgs(const ELL_Matrix& A, const Vector& r, const Vector& x)
-{
-    assert(x.size == A.ncol);
-    int max_col = 1024 * 128 * 6;  // 786432
-    if (A.ncol > max_col)
-    {
-        exit(-1);
-    }
-
-    int     nrow            = A.nrow;
-    int     nonzeros_in_row = A.nonzeros_in_row;
-    int*    col_ind         = A.col_ind;
-    double* val             = A.values;
-    double* diag            = A.diagonal;
-
-    double* rv = r.values;
-    double* xv = x.values;
-
-    // the forward sweep
-    for (int i = 0; i < nrow; i++)
-    {
-        double currentDiagonal = diag[i];
-        double sum             = rv[i];  // RHS value
-        int    curCol;
-
-        for (int j = 0; j < nonzeros_in_row; j++)
-        {
-            curCol = col_ind[i + j * nrow];
-            sum -= val[i + j * nrow] * xv[curCol];
-        }
-        sum += xv[i] * currentDiagonal;  // Remove diagonal contribution from previous loop
-        xv[i] = sum / currentDiagonal;
-    }
-    /*
-        // the backward sweep
-        for(int i = nrow-1; i >= 0; i--){
-            double currentDiagonal = diag[i];
-            double sum = rv[i];  // RHS value
-            int curCol;
-
-            for(int j = 0; j < nonzeros_in_row; j++){
-                curCol = col_ind[i + j * nrow];
-                sum -= val[i + j * nrow] * xv[curCol];
-            }
-            sum  += xv[i] * currentDiagonal; // Remove diagonal contribution from previous loop
-            xv[i] = sum / currentDiagonal;
-        }
-    */
-    return;
-}
+void* numaspmv4dia(void* args);
