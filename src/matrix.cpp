@@ -644,11 +644,11 @@ Block_Matrix::Block_Matrix(const COO_Matrix& A)
 // ############### DIA_Matrix Functions #############
 // ====================================================
 
-DIA_Matrix::DIA_Matrix() : nrow(0), ncol(0), ndiags(0), offsets(nullptr), values(nullptr) {}
+DIA_Matrix::DIA_Matrix() : nnz(0), nrow(0), ncol(0), ndiags(0), offsets(nullptr), values(nullptr) {}
 
 DIA_Matrix::DIA_Matrix(int n, int m, int ndiags, int* offsets, double* values) : nrow(n), ncol(m), ndiags(ndiags), offsets(offsets), values(values) {}
 
-DIA_Matrix::DIA_Matrix(const DIA_Matrix& A) : nrow(A.nrow), ncol(A.ncol), ndiags(A.ndiags)
+DIA_Matrix::DIA_Matrix(const DIA_Matrix& A) : nnz(A.nnz), nrow(A.nrow), ncol(A.ncol), ndiags(A.ndiags)
 {
     offsets = new int[ndiags];
     values  = new double[nrow * ndiags];
@@ -666,6 +666,7 @@ DIA_Matrix& DIA_Matrix::operator=(const DIA_Matrix& A)
     if (this != &A)
     {
         Free();
+        nnz    = A.nnz;
         nrow   = A.nrow;
         ncol   = A.ncol;
         ndiags = A.ndiags;
@@ -699,6 +700,7 @@ DIA_Matrix::DIA_Matrix(const CSR_Matrix& A)
         }
     }
 
+    nnz     = A.row_ptr[A.nrow];
     nrow    = A.nrow;
     ncol    = A.ncol;
     ndiags  = num_diagonals;
@@ -755,6 +757,7 @@ DIA_Matrix& DIA_Matrix::operator=(const CSR_Matrix& A)
         }
     }
 
+    nnz     = A.row_ptr[A.nrow];
     nrow    = A.nrow;
     ncol    = A.ncol;
     ndiags  = num_diagonals;

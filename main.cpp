@@ -107,8 +107,8 @@ int main(int argc, char* argv[])
     ell_matvec_numa(D, x, y, nthreads);
 
     // DIA-SpMV-numa
-    /* y.Fill(0);
-    dia_matvec_numa(E, x, y, nthreads); */
+    y.Fill(0);
+    dia_matvec_numa(E, x, y, nthreads);
 
     return 0;
 }

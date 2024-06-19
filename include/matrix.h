@@ -125,6 +125,7 @@ public:
 class DIA_Matrix
 {
 public:
+    int nnz;
     int nrow;
     int ncol;
     int ndiags;  // Number of diagonals

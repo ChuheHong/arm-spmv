@@ -443,7 +443,63 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthrea
     free(threads);
 }
 
-void dia_matvec_numa(const DIA_Matrix& A, const Vector& x, Vector& y, int nthreads) {}
+void dia_matvec_numa(const DIA_Matrix& A, const Vector& x, Vector& y, int nthreads)
+{
+    int numanodes       = numa_num_configured_nodes();
+    int rows_per_thread = A.nrow / nthreads;
+
+    NumaNode4DIA*  p       = (NumaNode4DIA*)malloc(nthreads * sizeof(NumaNode4DIA));
+    pthread_t*     threads = (pthread_t*)malloc(nthreads * sizeof(pthread_t));
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_init(&pthread_custom_attr);
+
+    for (int i = 0; i < nthreads; i++)
+    {
+        int numa_node      = i % numanodes;
+        p[i].alloc         = numa_node;
+        p[i].core_ind      = i;
+        p[i].start_row     = i * rows_per_thread;
+        p[i].rows_per_node = (i == nthreads - 1) ? (A.nrow - p[i].start_row) : rows_per_thread;
+        p[i].ndiags        = A.ndiags;
+        p[i].offsets       = A.offsets;
+        p[i].values        = (double*)numa_alloc_onnode(p[i].rows_per_node * A.ndiags * sizeof(double), numa_node);
+        p[i].X             = (double*)numa_alloc_onnode(x.size * sizeof(double), numa_node);
+        p[i].Y             = (double*)numa_alloc_onnode(p[i].rows_per_node * sizeof(double), numa_node);
+        memcpy(p[i].values, A.values + p[i].start_row * A.ndiags, p[i].rows_per_node * A.ndiags * sizeof(double));
+        memcpy(p[i].X, x.values, x.size * sizeof(double));
+        memset(p[i].Y, 0, p[i].rows_per_node * sizeof(double));
+    }
+
+    int    NTESTS  = 50;
+    double t_begin = mytimer();
+    for (int k = 0; k < NTESTS; k++)
+    {
+        for (int i = 0; i < nthreads; i++)
+        {
+            pthread_create(&threads[i], &pthread_custom_attr, numaspmv4dia, (void*)&p[i]);
+        }
+        for (int i = 0; i < nthreads; i++)
+        {
+            pthread_join(threads[i], NULL);
+        }
+    }
+    double t_end = mytimer();
+    double t_avg = ((t_end - t_begin) * 1000.0 + (t_end - t_begin) / 1000.0) / NTESTS;
+    printf("### DIA NUMA GFLOPS = %.5f\n", 2 * A.nnz / t_avg / pow(10, 6));
+
+    for (int i = 0; i < nthreads; i++)
+    {
+        for (int j = 0; j < p[i].rows_per_node; j++)
+        {
+            y.values[p[i].start_row + j] = p[i].Y[j];
+        }
+        numa_free(p[i].X, x.size * sizeof(double));
+        numa_free(p[i].Y, p[i].rows_per_node * sizeof(double));
+        numa_free(p[i].values, p[i].rows_per_node * A.ndiags * sizeof(double));
+    }
+    free(p);
+    free(threads);
+}
 
 void* numaspmv4coo(void* args)
 {
@@ -539,4 +595,30 @@ void* numaspmv4ell(void* args)
     return NULL;
 }
 
-void* numaspmv4dia(void* args);
+void* numaspmv4dia(void* args)
+{
+    NumaNode4DIA* pn = (NumaNode4DIA*)args;
+    int           me = pn->alloc;
+    numa_run_on_node(me);
+
+    int     nrow    = pn->rows_per_node;
+    int     ndiags  = pn->ndiags;
+    int*    offsets = pn->offsets;
+    double* values  = pn->values;
+    double* xv      = pn->X;
+    double* yv      = pn->Y;
+
+    for (int i = 0; i < nrow; ++i)
+    {
+        for (int d = 0; d < ndiags; ++d)
+        {
+            int j = i + offsets[d];
+            if (j >= 0 && j < nrow)
+            {
+                yv[i] += values[i * ndiags + d] * xv[j];
+            }
+        }
+    }
+
+    return NULL;
+}

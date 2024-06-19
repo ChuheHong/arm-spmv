@@ -59,8 +59,18 @@ public:
     double* Y;
 };
 
-class NumaNode4DIA
+struct NumaNode4DIA
 {
+public:
+    int     alloc;
+    int     core_ind;
+    int     start_row;
+    int     rows_per_node;
+    int     ndiags;
+    int*    offsets;
+    double* values;
+    double* X;
+    double* Y;
 };
 
 #endif
