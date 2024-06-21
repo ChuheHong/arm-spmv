@@ -15,7 +15,7 @@
 // ###################### Vec R&W #####################
 // ====================================================
 
-void vec_read(const char* filename, Vector& x)
+void VectorRead(const char* filename, Vector& x)
 {
     int   n;
     FILE* fp = fopen(filename, "r");
@@ -32,7 +32,7 @@ void vec_read(const char* filename, Vector& x)
     x.values = xv;
 }
 
-void vec_write(const char* filename, const Vector& x)
+void VectorWrite(const char* filename, const Vector& x)
 {
     int     n  = x.size;
     double* xv = x.values;
@@ -50,7 +50,7 @@ void vec_write(const char* filename, const Vector& x)
 // ====================================================
 // ###################### COO R&W #####################
 // ====================================================
-void coo_read(const char* filename, COO_Matrix& A)
+void COOMatrixRead(const char* filename, COOMatrix& A)
 {
     int         ret_code;
     MM_typecode matcode;
@@ -116,10 +116,10 @@ void coo_read(const char* filename, COO_Matrix& A)
 // ###################### CSR R&W #####################
 // ====================================================
 
-void csr_read(const char* filename, CSR_Matrix& A)
+void CSRMatrixRead(const char* filename, CSRMatrix& A)
 {
-    COO_Matrix B;
-    coo_read(filename, B);
+    COOMatrix B;
+    COOMatrixRead(filename, B);
     A = B;
 }
 
@@ -127,10 +127,10 @@ void csr_read(const char* filename, CSR_Matrix& A)
 // ###################### CSC R&W #####################
 // ====================================================
 
-void csc_read(const char* filename, CSC_Matrix& A)
+void CSCMatrixRead(const char* filename, CSCMatrix& A)
 {
-    COO_Matrix B;
-    coo_read(filename, B);
+    COOMatrix B;
+    COOMatrixRead(filename, B);
     A = B;
 }
 
@@ -138,9 +138,9 @@ void csc_read(const char* filename, CSC_Matrix& A)
 // ###################### ELL R&W #####################
 // ====================================================
 
-void ell_read(const char* filename, ELL_Matrix& A)
+void ELLMatrixRead(const char* filename, ELLMatrix& A)
 {
-    COO_Matrix B;
-    coo_read(filename, B);
+    COOMatrix B;
+    COOMatrixRead(filename, B);
     A = B;
 }

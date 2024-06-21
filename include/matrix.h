@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-class COO_Matrix
+class COOMatrix
 {
 public:
     int nrow;
@@ -22,16 +22,16 @@ public:
     int*    col_ind;
     double* values;
 
-    COO_Matrix();
-    COO_Matrix(int n, int m, int nnz, int* row_ind, int* col_ind, double* values);
-    COO_Matrix(const COO_Matrix& A);
-    ~COO_Matrix();
-    COO_Matrix& operator=(const COO_Matrix& A);
+    COOMatrix();
+    COOMatrix(int n, int m, int nnz, int* row_ind, int* col_ind, double* values);
+    COOMatrix(const COOMatrix& A);
+    ~COOMatrix();
+    COOMatrix& operator=(const COOMatrix& A);
 
     void Free();
 };
 
-class CSR_Matrix
+class CSRMatrix
 {
 public:
     int nrow;
@@ -42,18 +42,18 @@ public:
     double* values;
     double* diagonal;  // for SymGS
 
-    CSR_Matrix();
-    CSR_Matrix(int n, int m, int* row_ptr, int* col_ind, double* values, double* diagonal);
-    CSR_Matrix(const CSR_Matrix& A);
-    CSR_Matrix(const COO_Matrix& A);
-    ~CSR_Matrix();
-    CSR_Matrix& operator=(const CSR_Matrix& A);
-    CSR_Matrix& operator=(const COO_Matrix& A);
+    CSRMatrix();
+    CSRMatrix(int n, int m, int* row_ptr, int* col_ind, double* values, double* diagonal);
+    CSRMatrix(const CSRMatrix& A);
+    CSRMatrix(const COOMatrix& A);
+    ~CSRMatrix();
+    CSRMatrix& operator=(const CSRMatrix& A);
+    CSRMatrix& operator=(const COOMatrix& A);
 
     void Free();
 };
 
-class CSC_Matrix
+class CSCMatrix
 {
 public:
     int nrow;
@@ -63,19 +63,19 @@ public:
     int*    col_ptr;
     double* values;
 
-    CSC_Matrix();
-    CSC_Matrix(int n, int m, int* row_ind, int* col_ptr, double* values);
-    CSC_Matrix(const CSC_Matrix& A);
-    CSC_Matrix(const COO_Matrix& A);
-    ~CSC_Matrix();
-    CSC_Matrix& operator=(const CSC_Matrix& A);
-    CSC_Matrix& operator=(const COO_Matrix& A);
+    CSCMatrix();
+    CSCMatrix(int n, int m, int* row_ind, int* col_ptr, double* values);
+    CSCMatrix(const CSCMatrix& A);
+    CSCMatrix(const COOMatrix& A);
+    ~CSCMatrix();
+    CSCMatrix& operator=(const CSCMatrix& A);
+    CSCMatrix& operator=(const COOMatrix& A);
 
     void Free();
 };
 
 // 这里的ELL是列主序存储
-class ELL_Matrix
+class ELLMatrix
 {
 public:
     int nrow;
@@ -87,18 +87,18 @@ public:
     double* values;
     double* diagonal;  // for SymGS
 
-    ELL_Matrix();
-    ELL_Matrix(int n, int m, int nnz, int nonzeros_in_row, int* col_ind, double* values, double* diagonal);
-    ELL_Matrix(const ELL_Matrix& A);
-    ELL_Matrix(const COO_Matrix& A);
-    ~ELL_Matrix();
-    ELL_Matrix& operator=(const ELL_Matrix& A);
-    ELL_Matrix& operator=(const COO_Matrix& A);
+    ELLMatrix();
+    ELLMatrix(int n, int m, int nnz, int nonzeros_in_row, int* col_ind, double* values, double* diagonal);
+    ELLMatrix(const ELLMatrix& A);
+    ELLMatrix(const COOMatrix& A);
+    ~ELLMatrix();
+    ELLMatrix& operator=(const ELLMatrix& A);
+    ELLMatrix& operator=(const COOMatrix& A);
 
     void Free();
 };
 
-class Block_Matrix
+class BlockMatrix
 {
 public:
     int nrow;
@@ -111,18 +111,18 @@ public:
     int*     col_ind;
     double** values;
 
-    Block_Matrix();
-    Block_Matrix(int n, int m, int nnz, int nblocks, int* block_size, int* row_ind, int* col_ind, double** values);
-    Block_Matrix(const Block_Matrix& A);
-    Block_Matrix(const COO_Matrix& A);
-    ~Block_Matrix();
-    Block_Matrix& operator=(const Block_Matrix& A);
-    Block_Matrix& operator=(const COO_Matrix& A);
+    BlockMatrix();
+    BlockMatrix(int n, int m, int nnz, int nblocks, int* block_size, int* row_ind, int* col_ind, double** values);
+    BlockMatrix(const BlockMatrix& A);
+    BlockMatrix(const COOMatrix& A);
+    ~BlockMatrix();
+    BlockMatrix& operator=(const BlockMatrix& A);
+    BlockMatrix& operator=(const COOMatrix& A);
 
     void Free();
 };
 
-class DIA_Matrix
+class DIAMatrix
 {
 public:
     int nnz;
@@ -133,13 +133,13 @@ public:
     int*    offsets;  // Array of diagonal offsets
     double* values;   // Array of values for the diagonals
 
-    DIA_Matrix();
-    DIA_Matrix(int n, int m, int ndiags, int* offsets, double* values);
-    DIA_Matrix(const DIA_Matrix& A);
-    DIA_Matrix(const CSR_Matrix& A);
-    ~DIA_Matrix();
-    DIA_Matrix& operator=(const DIA_Matrix& A);
-    DIA_Matrix& operator=(const CSR_Matrix& A);
+    DIAMatrix();
+    DIAMatrix(int n, int m, int ndiags, int* offsets, double* values);
+    DIAMatrix(const DIAMatrix& A);
+    DIAMatrix(const CSRMatrix& A);
+    ~DIAMatrix();
+    DIAMatrix& operator=(const DIAMatrix& A);
+    DIAMatrix& operator=(const CSRMatrix& A);
 
     void Free();
 };

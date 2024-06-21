@@ -22,7 +22,7 @@
 #include <omp.h>
 #endif
 
-void coo_matvec(const COO_Matrix& A, const Vector& x, Vector& y)
+void COOMatirxMatVector(const COOMatrix& A, const Vector& x, Vector& y)
 {
     int     nrow    = A.nrow;
     int     nnz     = A.nnz;
@@ -48,7 +48,7 @@ void coo_matvec(const COO_Matrix& A, const Vector& x, Vector& y)
     return;
 }
 
-void csr_matvec(const CSR_Matrix& A, const Vector& x, Vector& y)
+void CSRMatrixMatVector(const CSRMatrix& A, const Vector& x, Vector& y)
 {
     int     nrow    = A.nrow;
     int*    row_ptr = A.row_ptr;
@@ -73,7 +73,7 @@ void csr_matvec(const CSR_Matrix& A, const Vector& x, Vector& y)
     return;
 }
 
-void csc_matvec(const CSC_Matrix& A, const Vector& x, Vector& y)
+void CSCMatrixMatVector(const CSCMatrix& A, const Vector& x, Vector& y)
 {
     int     ncol    = A.ncol;
     int*    row_ind = A.row_ind;
@@ -101,7 +101,7 @@ void csc_matvec(const CSC_Matrix& A, const Vector& x, Vector& y)
     return;
 }
 
-void ell_matvec(const ELL_Matrix& A, const Vector& x, Vector& y)
+void ELLMatrixMatVector(const ELLMatrix& A, const Vector& x, Vector& y)
 {
     int     nrow            = A.nrow;
     int     nonzeros_in_row = A.nonzeros_in_row;
@@ -127,7 +127,7 @@ void ell_matvec(const ELL_Matrix& A, const Vector& x, Vector& y)
     return;
 }
 
-void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y)
+void DIAMatrixMatVector(const DIAMatrix& A, const Vector& x, Vector& y)
 {
     int     nrow    = A.nrow;
     int     ndiags  = A.ndiags;
@@ -152,7 +152,7 @@ void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y)
     }
 }
 
-void coo_matvec_numa(const COO_Matrix& A, const Vector& x, Vector& y, int nthreads)
+void COOMatrixMatVectorNuma(const COOMatrix& A, const Vector& x, Vector& y, int nthreads)
 {
     int numanodes     = numa_num_configured_nodes();
     int rows_per_node = y.size / nthreads;
@@ -211,7 +211,7 @@ void coo_matvec_numa(const COO_Matrix& A, const Vector& x, Vector& y, int nthrea
     {
         for (int i = 0; i < numanodes; i++)
         {
-            pthread_create(&threads[i], &pthread_custom_attr, numaspmv4coo, (void*)&p[i]);
+            pthread_create(&threads[i], &pthread_custom_attr, COOMatrixMatVectorNumaThread, (void*)&p[i]);
         }
         for (int i = 0; i < numanodes; i++)
         {
@@ -234,7 +234,7 @@ void coo_matvec_numa(const COO_Matrix& A, const Vector& x, Vector& y, int nthrea
     free(threads);
 }
 
-void csr_matvec_numa(const CSR_Matrix& A, const Vector& x, Vector& y, int nthreads)
+void CSRMatrixMatVectorNuma(const CSRMatrix& A, const Vector& x, Vector& y, int nthreads)
 {
     int numanodes       = numa_num_configured_nodes();
     int rows_per_thread = A.nrow / nthreads;
@@ -280,7 +280,7 @@ void csr_matvec_numa(const CSR_Matrix& A, const Vector& x, Vector& y, int nthrea
     {
         for (int i = 0; i < nthreads; i++)
         {
-            pthread_create(&threads[i], &pthread_custom_attr, numaspmv4csr, (void*)&p[i]);
+            pthread_create(&threads[i], &pthread_custom_attr, CSRMatrixMatVectorNumaThread, (void*)&p[i]);
         }
         for (int i = 0; i < nthreads; i++)
         {
@@ -303,7 +303,7 @@ void csr_matvec_numa(const CSR_Matrix& A, const Vector& x, Vector& y, int nthrea
     free(threads);
 }
 
-void csc_matvec_numa(const CSC_Matrix& A, const Vector& x, Vector& y, int nthreads)
+void CSCMatrixMatVectorNuma(const CSCMatrix& A, const Vector& x, Vector& y, int nthreads)
 {
     int numanodes       = numa_num_configured_nodes();
     int cols_per_thread = A.ncol / nthreads;
@@ -349,7 +349,7 @@ void csc_matvec_numa(const CSC_Matrix& A, const Vector& x, Vector& y, int nthrea
     {
         for (int i = 0; i < nthreads; i++)
         {
-            pthread_create(&threads[i], &pthread_custom_attr, numaspmv4csc, (void*)&p[i]);
+            pthread_create(&threads[i], &pthread_custom_attr, CSCMatrixMatVectorNumaThread, (void*)&p[i]);
         }
         for (int i = 0; i < nthreads; i++)
         {
@@ -383,7 +383,7 @@ void csc_matvec_numa(const CSC_Matrix& A, const Vector& x, Vector& y, int nthrea
     free(threads);
 }
 
-void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthreads)
+void ELLMatrixMatVectorNuma(const ELLMatrix& A, const Vector& x, Vector& y, int nthreads)
 {
     int numanodes       = numa_num_configured_nodes();
     int rows_per_thread = A.nrow / nthreads;
@@ -421,7 +421,7 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthrea
     {
         for (int i = 0; i < nthreads; i++)
         {
-            pthread_create(&threads[i], &pthread_custom_attr, numaspmv4ell, (void*)&p[i]);
+            pthread_create(&threads[i], &pthread_custom_attr, ELLMatrixMatVectorNumaThread, (void*)&p[i]);
         }
         for (int i = 0; i < nthreads; i++)
         {
@@ -443,7 +443,7 @@ void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthrea
     free(threads);
 }
 
-void dia_matvec_numa(const DIA_Matrix& A, const Vector& x, Vector& y, int nthreads)
+void DIAMatrixMatVectorNuma(const DIAMatrix& A, const Vector& x, Vector& y, int nthreads)
 {
     int numanodes       = numa_num_configured_nodes();
     int rows_per_thread = A.nrow / nthreads;
@@ -476,7 +476,7 @@ void dia_matvec_numa(const DIA_Matrix& A, const Vector& x, Vector& y, int nthrea
     {
         for (int i = 0; i < nthreads; i++)
         {
-            pthread_create(&threads[i], &pthread_custom_attr, numaspmv4dia, (void*)&p[i]);
+            pthread_create(&threads[i], &pthread_custom_attr, DIAMatrixMatVectorNumaThread, (void*)&p[i]);
         }
         for (int i = 0; i < nthreads; i++)
         {
@@ -501,7 +501,7 @@ void dia_matvec_numa(const DIA_Matrix& A, const Vector& x, Vector& y, int nthrea
     free(threads);
 }
 
-void* numaspmv4coo(void* args)
+void* COOMatrixMatVectorNumaThread(void* args)
 {
     NumaNode4COO* pn = (NumaNode4COO*)args;
     int           me = pn->alloc;
@@ -522,7 +522,7 @@ void* numaspmv4coo(void* args)
     return NULL;
 }
 
-void* numaspmv4csr(void* args)
+void* CSRMatrixMatVectorNumaThread(void* args)
 {
     NumaNode4CSR* pn = (NumaNode4CSR*)args;
     int           me = pn->alloc;
@@ -547,7 +547,7 @@ void* numaspmv4csr(void* args)
     return NULL;
 }
 
-void* numaspmv4csc(void* args)
+void* CSCMatrixMatVectorNumaThread(void* args)
 {
     NumaNode4CSC* pn = (NumaNode4CSC*)args;
     int           me = pn->alloc;
@@ -571,7 +571,7 @@ void* numaspmv4csc(void* args)
     return NULL;
 }
 
-void* numaspmv4ell(void* args)
+void* ELLMatrixMatVectorNumaThread(void* args)
 {
     NumaNode4ELL* pn = (NumaNode4ELL*)args;
     int           me = pn->alloc;
@@ -595,7 +595,7 @@ void* numaspmv4ell(void* args)
     return NULL;
 }
 
-void* numaspmv4dia(void* args)
+void* DIAMatrixMatVectorNumaThread(void* args)
 {
     NumaNode4DIA* pn = (NumaNode4DIA*)args;
     int           me = pn->alloc;

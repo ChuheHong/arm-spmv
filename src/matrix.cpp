@@ -14,15 +14,14 @@
 // ############### COO_Matrix Functions ###############
 // ====================================================
 
-COO_Matrix::COO_Matrix() : nrow(0), ncol(0), nnz(0), row_ind(0), col_ind(0), values(0) {}
+COOMatrix::COOMatrix() : nrow(0), ncol(0), nnz(0), row_ind(0), col_ind(0), values(0) {}
 
-COO_Matrix::COO_Matrix(int _n, int _m, int _nnz, int* _row_ind, int* _col_ind, double* _values)
+COOMatrix::COOMatrix(int _n, int _m, int _nnz, int* _row_ind, int* _col_ind, double* _values)
     : nrow(_n), ncol(_m), nnz(_nnz), row_ind(_row_ind), col_ind(_col_ind), values(_values)
 {
 }
 
-COO_Matrix::COO_Matrix(const COO_Matrix& A)
-    : nrow(A.nrow), ncol(A.ncol), nnz(A.nnz), row_ind(new int[A.nnz]), col_ind(new int[A.nnz]), values(new double[A.nnz])
+COOMatrix::COOMatrix(const COOMatrix& A) : nrow(A.nrow), ncol(A.ncol), nnz(A.nnz), row_ind(new int[A.nnz]), col_ind(new int[A.nnz]), values(new double[A.nnz])
 {
     int*    Ai = A.row_ind;
     int*    Aj = A.col_ind;
@@ -36,7 +35,7 @@ COO_Matrix::COO_Matrix(const COO_Matrix& A)
     }
 }
 
-COO_Matrix::~COO_Matrix()
+COOMatrix::~COOMatrix()
 {
     if (row_ind)
         delete[] row_ind;
@@ -46,7 +45,7 @@ COO_Matrix::~COO_Matrix()
         delete[] values;
 }
 
-COO_Matrix& COO_Matrix::operator=(const COO_Matrix& A)
+COOMatrix& COOMatrix::operator=(const COOMatrix& A)
 {
     Free();
 
@@ -71,7 +70,7 @@ COO_Matrix& COO_Matrix::operator=(const COO_Matrix& A)
     return *this;
 }
 
-void COO_Matrix::Free()
+void COOMatrix::Free()
 {
     if (row_ind)
         delete[] row_ind;
@@ -91,14 +90,14 @@ void COO_Matrix::Free()
 // ====================================================
 // ############### CSR_Matrix Functions ###############
 // ====================================================
-CSR_Matrix::CSR_Matrix() : nrow(0), ncol(0), row_ptr(0), col_ind(0), values(0), diagonal(0) {}
+CSRMatrix::CSRMatrix() : nrow(0), ncol(0), row_ptr(0), col_ind(0), values(0), diagonal(0) {}
 
-CSR_Matrix::CSR_Matrix(int _n, int _m, int* _row_ptr, int* _col_ind, double* _values, double* _diagonal)
+CSRMatrix::CSRMatrix(int _n, int _m, int* _row_ptr, int* _col_ind, double* _values, double* _diagonal)
     : nrow(_n), ncol(_m), row_ptr(_row_ptr), col_ind(_col_ind), values(_values), diagonal(_diagonal)
 {
 }
 
-CSR_Matrix::CSR_Matrix(const CSR_Matrix& A)
+CSRMatrix::CSRMatrix(const CSRMatrix& A)
     : nrow(A.nrow), ncol(A.ncol), row_ptr(new int[A.nrow + 1]), col_ind(new int[A.row_ptr[A.nrow]]), values(new double[A.row_ptr[A.nrow]]),
       diagonal(new double[A.nrow])
 {
@@ -120,7 +119,7 @@ CSR_Matrix::CSR_Matrix(const CSR_Matrix& A)
         diagonal[i] = Ad[i];
 }
 
-CSR_Matrix::CSR_Matrix(const COO_Matrix& A) : row_ptr(new int[A.nrow + 1]), col_ind(new int[A.nnz]), values(new double[A.nnz]), diagonal(new double[A.nrow])
+CSRMatrix::CSRMatrix(const COOMatrix& A) : row_ptr(new int[A.nrow + 1]), col_ind(new int[A.nnz]), values(new double[A.nnz]), diagonal(new double[A.nrow])
 {
     int     nnz = A.nnz;
     int*    Ai  = A.row_ind;
@@ -161,7 +160,7 @@ CSR_Matrix::CSR_Matrix(const COO_Matrix& A) : row_ptr(new int[A.nrow + 1]), col_
     }
 }
 
-CSR_Matrix::~CSR_Matrix()
+CSRMatrix::~CSRMatrix()
 {
     if (row_ptr)
         delete[] row_ptr;
@@ -173,7 +172,7 @@ CSR_Matrix::~CSR_Matrix()
         delete[] diagonal;
 }
 
-CSR_Matrix& CSR_Matrix::operator=(const CSR_Matrix& A)
+CSRMatrix& CSRMatrix::operator=(const CSRMatrix& A)
 {
     Free();
 
@@ -205,7 +204,7 @@ CSR_Matrix& CSR_Matrix::operator=(const CSR_Matrix& A)
     return *this;
 }
 
-CSR_Matrix& CSR_Matrix::operator=(const COO_Matrix& A)
+CSRMatrix& CSRMatrix::operator=(const COOMatrix& A)
 {
     Free();
 
@@ -255,7 +254,7 @@ CSR_Matrix& CSR_Matrix::operator=(const COO_Matrix& A)
     return *this;
 }
 
-void CSR_Matrix::Free()
+void CSRMatrix::Free()
 {
     if (row_ptr)
         delete[] row_ptr;
@@ -277,14 +276,13 @@ void CSR_Matrix::Free()
 // ====================================================
 // ############### CSC_Matrix Functions ###############
 // ====================================================
-CSC_Matrix::CSC_Matrix() : nrow(0), ncol(0), col_ptr(0), row_ind(0), values(0) {}
+CSCMatrix::CSCMatrix() : nrow(0), ncol(0), col_ptr(0), row_ind(0), values(0) {}
 
-CSC_Matrix::CSC_Matrix(int _n, int _m, int* _col_ptr, int* _row_ind, double* _values)
-    : nrow(_n), ncol(_m), col_ptr(_col_ptr), row_ind(_row_ind), values(_values)
+CSCMatrix::CSCMatrix(int _n, int _m, int* _col_ptr, int* _row_ind, double* _values) : nrow(_n), ncol(_m), col_ptr(_col_ptr), row_ind(_row_ind), values(_values)
 {
 }
 
-CSC_Matrix::CSC_Matrix(const CSC_Matrix& A)
+CSCMatrix::CSCMatrix(const CSCMatrix& A)
     : nrow(A.nrow), ncol(A.ncol), col_ptr(new int[A.ncol + 1]), row_ind(new int[A.col_ptr[A.ncol]]), values(new double[A.col_ptr[A.ncol]])
 {
     int*    Ap = A.col_ptr;
@@ -301,7 +299,7 @@ CSC_Matrix::CSC_Matrix(const CSC_Matrix& A)
     }
 }
 
-CSC_Matrix::CSC_Matrix(const COO_Matrix& A) : col_ptr(new int[A.ncol + 1]), row_ind(new int[A.nnz]), values(new double[A.nnz])
+CSCMatrix::CSCMatrix(const COOMatrix& A) : col_ptr(new int[A.ncol + 1]), row_ind(new int[A.nnz]), values(new double[A.nnz])
 {
     int     nnz = A.nnz;
     int*    Ai  = A.row_ind;
@@ -333,7 +331,7 @@ CSC_Matrix::CSC_Matrix(const COO_Matrix& A) : col_ptr(new int[A.ncol + 1]), row_
     }
 }
 
-CSC_Matrix::~CSC_Matrix()
+CSCMatrix::~CSCMatrix()
 {
     if (col_ptr)
         delete[] col_ptr;
@@ -343,7 +341,7 @@ CSC_Matrix::~CSC_Matrix()
         delete[] values;
 }
 
-CSC_Matrix& CSC_Matrix::operator=(const CSC_Matrix& A)
+CSCMatrix& CSCMatrix::operator=(const CSCMatrix& A)
 {
     Free();
 
@@ -370,7 +368,7 @@ CSC_Matrix& CSC_Matrix::operator=(const CSC_Matrix& A)
     return *this;
 }
 
-CSC_Matrix& CSC_Matrix::operator=(const COO_Matrix& A)
+CSCMatrix& CSCMatrix::operator=(const COOMatrix& A)
 {
     Free();
 
@@ -410,7 +408,7 @@ CSC_Matrix& CSC_Matrix::operator=(const COO_Matrix& A)
     return *this;
 }
 
-void CSC_Matrix::Free()
+void CSCMatrix::Free()
 {
     if (col_ptr)
         delete[] col_ptr;
@@ -429,14 +427,14 @@ void CSC_Matrix::Free()
 // ====================================================
 // ############### ELL_Matrix Functions ###############
 // ====================================================
-ELL_Matrix::ELL_Matrix() : nrow(0), ncol(0), nnz(0), nonzeros_in_row(0), col_ind(0), values(0), diagonal(0) {}
+ELLMatrix::ELLMatrix() : nrow(0), ncol(0), nnz(0), nonzeros_in_row(0), col_ind(0), values(0), diagonal(0) {}
 
-ELL_Matrix::ELL_Matrix(int _n, int _m, int _nnz, int _nonzeros_in_row, int* _col_ind, double* _values, double* _diagonal)
+ELLMatrix::ELLMatrix(int _n, int _m, int _nnz, int _nonzeros_in_row, int* _col_ind, double* _values, double* _diagonal)
     : nrow(_n), ncol(_m), nnz(_nnz), nonzeros_in_row(_nonzeros_in_row), col_ind(_col_ind), values(_values), diagonal(_diagonal)
 {
 }
 
-ELL_Matrix::ELL_Matrix(const ELL_Matrix& A)
+ELLMatrix::ELLMatrix(const ELLMatrix& A)
     : nrow(A.nrow), ncol(A.ncol), nnz(A.nnz), nonzeros_in_row(A.nonzeros_in_row), col_ind(new int[A.nrow * A.nonzeros_in_row]),
       values(new double[A.nrow * A.nonzeros_in_row]), diagonal(new double[A.nrow])
 {
@@ -456,7 +454,7 @@ ELL_Matrix::ELL_Matrix(const ELL_Matrix& A)
         diagonal[i] = Ad[i];
 }
 
-ELL_Matrix::ELL_Matrix(const COO_Matrix& A)
+ELLMatrix::ELLMatrix(const COOMatrix& A)
 {
     nrow = A.nrow;
     ncol = A.ncol;
@@ -508,7 +506,7 @@ ELL_Matrix::ELL_Matrix(const COO_Matrix& A)
     }
 }
 
-ELL_Matrix::~ELL_Matrix()
+ELLMatrix::~ELLMatrix()
 {
     if (col_ind)
         delete[] col_ind;
@@ -518,7 +516,7 @@ ELL_Matrix::~ELL_Matrix()
         delete[] diagonal;
 }
 
-ELL_Matrix& ELL_Matrix::operator=(const ELL_Matrix& A)
+ELLMatrix& ELLMatrix::operator=(const ELLMatrix& A)
 {
     Free();
     int*    Aj = A.col_ind;
@@ -547,7 +545,7 @@ ELL_Matrix& ELL_Matrix::operator=(const ELL_Matrix& A)
     return *this;
 }
 
-ELL_Matrix& ELL_Matrix::operator=(const COO_Matrix& A)
+ELLMatrix& ELLMatrix::operator=(const COOMatrix& A)
 {
     Free();
 
@@ -603,7 +601,7 @@ ELL_Matrix& ELL_Matrix::operator=(const COO_Matrix& A)
     return *this;
 }
 
-void ELL_Matrix::Free()
+void ELLMatrix::Free()
 {
     if (col_ind)
         delete[] col_ind;
@@ -625,14 +623,14 @@ void ELL_Matrix::Free()
 // ############### Block_Matrix Functions #############
 // ====================================================
 
-Block_Matrix::Block_Matrix() : nrow(0), ncol(0), nnz(0), nblocks(0), block_size(0), row_ind(0), col_ind(0), values(0) {}
+BlockMatrix::BlockMatrix() : nrow(0), ncol(0), nnz(0), nblocks(0), block_size(0), row_ind(0), col_ind(0), values(0) {}
 
-Block_Matrix::Block_Matrix(int _n, int _m, int _nnz, int _nblocks, int* _block_size, int* _row_ind, int* _col_ind, double** _values)
+BlockMatrix::BlockMatrix(int _n, int _m, int _nnz, int _nblocks, int* _block_size, int* _row_ind, int* _col_ind, double** _values)
     : nrow(_n), ncol(_m), nnz(_nnz), nblocks(_nblocks), block_size(_block_size), row_ind(_row_ind), col_ind(_col_ind), values(_values)
 {
 }
 
-Block_Matrix::Block_Matrix(const COO_Matrix& A)
+BlockMatrix::BlockMatrix(const COOMatrix& A)
 {
     nrow    = A.nrow;
     ncol    = A.ncol;
@@ -644,11 +642,11 @@ Block_Matrix::Block_Matrix(const COO_Matrix& A)
 // ############### DIA_Matrix Functions #############
 // ====================================================
 
-DIA_Matrix::DIA_Matrix() : nnz(0), nrow(0), ncol(0), ndiags(0), offsets(nullptr), values(nullptr) {}
+DIAMatrix::DIAMatrix() : nnz(0), nrow(0), ncol(0), ndiags(0), offsets(nullptr), values(nullptr) {}
 
-DIA_Matrix::DIA_Matrix(int n, int m, int ndiags, int* offsets, double* values) : nrow(n), ncol(m), ndiags(ndiags), offsets(offsets), values(values) {}
+DIAMatrix::DIAMatrix(int n, int m, int ndiags, int* offsets, double* values) : nrow(n), ncol(m), ndiags(ndiags), offsets(offsets), values(values) {}
 
-DIA_Matrix::DIA_Matrix(const DIA_Matrix& A) : nnz(A.nnz), nrow(A.nrow), ncol(A.ncol), ndiags(A.ndiags)
+DIAMatrix::DIAMatrix(const DIAMatrix& A) : nnz(A.nnz), nrow(A.nrow), ncol(A.ncol), ndiags(A.ndiags)
 {
     offsets = new int[ndiags];
     values  = new double[nrow * ndiags];
@@ -656,12 +654,12 @@ DIA_Matrix::DIA_Matrix(const DIA_Matrix& A) : nnz(A.nnz), nrow(A.nrow), ncol(A.n
     std::copy(A.values, A.values + nrow * ndiags, values);
 }
 
-DIA_Matrix::~DIA_Matrix()
+DIAMatrix::~DIAMatrix()
 {
     Free();
 }
 
-DIA_Matrix& DIA_Matrix::operator=(const DIA_Matrix& A)
+DIAMatrix& DIAMatrix::operator=(const DIAMatrix& A)
 {
     if (this != &A)
     {
@@ -679,7 +677,7 @@ DIA_Matrix& DIA_Matrix::operator=(const DIA_Matrix& A)
     return *this;
 }
 
-DIA_Matrix::DIA_Matrix(const CSR_Matrix& A)
+DIAMatrix::DIAMatrix(const CSRMatrix& A)
 {
     int  num_diagonals = 0;
     int* diag_map      = (int*)malloc((A.nrow + A.ncol - 1) * sizeof(int));
@@ -734,7 +732,7 @@ DIA_Matrix::DIA_Matrix(const CSR_Matrix& A)
     free(diag_map);
 }
 
-DIA_Matrix& DIA_Matrix::operator=(const CSR_Matrix& A)
+DIAMatrix& DIAMatrix::operator=(const CSRMatrix& A)
 {
     Free();
 
@@ -793,7 +791,7 @@ DIA_Matrix& DIA_Matrix::operator=(const CSR_Matrix& A)
     return *this;
 }
 
-void DIA_Matrix::Free()
+void DIAMatrix::Free()
 {
     if (offsets)
     {

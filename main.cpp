@@ -29,9 +29,9 @@ int main(int argc, char* argv[])
     omp_set_num_threads(nthreads);
 #endif
 
-    COO_Matrix A;
-    Vector     x, y;
-    coo_read(file, A);
+    COOMatrix A;
+    Vector    x, y;
+    COOMatrixRead(file, A);
     int nrow, ncol;
     nrow = A.nrow;
     ncol = A.ncol;
@@ -43,47 +43,47 @@ int main(int argc, char* argv[])
     y.Fill(0);
     double t_coo_begin = mytimer();
     for (int i = 0; i < NUM_TEST; i++)
-        coo_matvec(A, x, y);
+        COOMatirxMatVector(A, x, y);
     double t_coo_end = mytimer();
     double t_coo     = ((t_coo_end - t_coo_begin) * 1000.0 + (t_coo_end - t_coo_begin) / 1000.0) / NUM_TEST;
     printf("### COO CPU GFLOPS = %.5f\n", 2 * A.nnz / t_coo / pow(10, 6));
 
     // CSR-SpMV
-    CSR_Matrix B(A);
+    CSRMatrix B(A);
     y.Fill(0);
     double t_csr_begin = mytimer();
     for (int i = 0; i < NUM_TEST; i++)
-        csr_matvec(B, x, y);
+        CSRMatrixMatVector(B, x, y);
     double t_csr_end = mytimer();
     double t_csr     = ((t_csr_end - t_csr_begin) * 1000.0 + (t_csr_end - t_csr_begin) / 1000.0) / NUM_TEST;
     printf("### CSR CPU GFLOPS = %.5f\n", 2 * A.nnz / t_csr / pow(10, 6));
 
     // CSC-SpMV
-    CSC_Matrix C(A);
+    CSCMatrix C(A);
     y.Fill(0);
     double t_csc_begin = mytimer();
     for (int i = 0; i < NUM_TEST; i++)
-        csc_matvec(C, x, y);
+        CSCMatrixMatVector(C, x, y);
     double t_csc_end = mytimer();
     double t_csc     = ((t_csc_end - t_csc_begin) * 1000.0 + (t_csc_end - t_csc_begin) / 1000.0) / NUM_TEST;
     printf("### CSC CPU GFLOPS = %.5f\n", 2 * A.nnz / t_csc / pow(10, 6));
 
     // ELL-SpMV
-    ELL_Matrix D(A);
+    ELLMatrix D(A);
     y.Fill(0);
     double t_ell_begin = mytimer();
     for (int i = 0; i < NUM_TEST; i++)
-        ell_matvec(D, x, y);
+        ELLMatrixMatVector(D, x, y);
     double t_ell_end = mytimer();
     double t_ell     = ((t_ell_end - t_ell_begin) * 1000.0 + (t_ell_end - t_ell_begin) / 1000.0) / NUM_TEST;
     printf("### ELL CPU GFLOPS = %.5f\n", 2 * A.nnz / t_ell / pow(10, 6));
 
     // DIA-SpMV
-    DIA_Matrix E(B);
+    DIAMatrix E(B);
     y.Fill(0);
     double t_dia_begin = mytimer();
     for (int i = 0; i < NUM_TEST; i++)
-        dia_matvec(E, x, y);
+        DIAMatrixMatVector(E, x, y);
     double t_dia_end = mytimer();
     double t_dia     = ((t_dia_end - t_dia_begin) * 1000.0 + (t_dia_end - t_dia_begin) / 1000.0) / NUM_TEST;
     printf("### DIA CPU GFLOPS = %.5f\n", 2 * A.nnz / t_dia / pow(10, 6));
@@ -92,23 +92,23 @@ int main(int argc, char* argv[])
 
     // COO-SpMV-numa
     y.Fill(0);
-    coo_matvec_numa(A, x, y, nthreads);
+    COOMatrixMatVectorNuma(A, x, y, nthreads);
 
     // CSR-SpMV-numa
     y.Fill(0);
-    csr_matvec_numa(B, x, y, nthreads);
+    CSRMatrixMatVectorNuma(B, x, y, nthreads);
 
     // CSC-SpMV-numa
     y.Fill(0);
-    csc_matvec_numa(C, x, y, nthreads);
+    CSCMatrixMatVectorNuma(C, x, y, nthreads);
 
     // ELL-SpMV-numa
     y.Fill(0);
-    ell_matvec_numa(D, x, y, nthreads);
+    ELLMatrixMatVectorNuma(D, x, y, nthreads);
 
     // DIA-SpMV-numa
     y.Fill(0);
-    dia_matvec_numa(E, x, y, nthreads);
+    DIAMatrixMatVectorNuma(E, x, y, nthreads);
 
     return 0;
 }

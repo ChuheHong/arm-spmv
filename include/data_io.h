@@ -13,14 +13,12 @@
 #include "matrix.h"
 #include "vector.h"
 
+void VectorRead(const char* filename, Vector& x);
+void VectorWrite(const char* filename, const Vector& x);
 
-
-void vec_read(const char* filename, Vector& x);
-void vec_write(const char* filename, const Vector& x);
-
-void coo_read(const char* filename, COO_Matrix& A);
-void csr_read(const char* filename, CSR_Matrix& A);
-void csc_read(const char* filename, CSC_Matrix& A);
-void ell_read(const char* filename, ELL_Matrix& A);
+void COOMatrixRead(const char* filename, COOMatrix& A);
+void CSRMatrixRead(const char* filename, CSRMatrix& A);
+void CSCMatrixRead(const char* filename, CSCMatrix& A);
+void ELLMatrixRead(const char* filename, ELLMatrix& A);
 
 #endif

@@ -11,22 +11,22 @@
 #include "matrix.h"
 #include "vector.h"
 
-void coo_matvec(const COO_Matrix& A, const Vector& x, Vector& y);
-void csr_matvec(const CSR_Matrix& A, const Vector& x, Vector& y);
-void csc_matvec(const CSC_Matrix& A, const Vector& x, Vector& y);
-void ell_matvec(const ELL_Matrix& A, const Vector& x, Vector& y);
-void dia_matvec(const DIA_Matrix& A, const Vector& x, Vector& y);
+void COOMatirxMatVector(const COOMatrix& A, const Vector& x, Vector& y);
+void CSRMatrixMatVector(const CSRMatrix& A, const Vector& x, Vector& y);
+void CSCMatrixMatVector(const CSCMatrix& A, const Vector& x, Vector& y);
+void ELLMatrixMatVector(const ELLMatrix& A, const Vector& x, Vector& y);
+void DIAMatrixMatVector(const DIAMatrix& A, const Vector& x, Vector& y);
 
-void coo_matvec_numa(const COO_Matrix& A, const Vector& x, Vector& y, int nthreads);
-void csr_matvec_numa(const CSR_Matrix& A, const Vector& x, Vector& y, int nthreads);
-void csc_matvec_numa(const CSC_Matrix& A, const Vector& x, Vector& y, int nthreads);
-void ell_matvec_numa(const ELL_Matrix& A, const Vector& x, Vector& y, int nthreads);
-void dia_matvec_numa(const DIA_Matrix& A, const Vector& x, Vector& y, int nthreads);
+void COOMatrixMatVectorNuma(const COOMatrix& A, const Vector& x, Vector& y, int nthreads);
+void CSRMatrixMatVectorNuma(const CSRMatrix& A, const Vector& x, Vector& y, int nthreads);
+void CSCMatrixMatVectorNuma(const CSCMatrix& A, const Vector& x, Vector& y, int nthreads);
+void ELLMatrixMatVectorNuma(const ELLMatrix& A, const Vector& x, Vector& y, int nthreads);
+void DIAMatrixMatVectorNuma(const DIAMatrix& A, const Vector& x, Vector& y, int nthreads);
 
-void* numaspmv4coo(void* args);
-void* numaspmv4csr(void* args);
-void* numaspmv4csc(void* args);
-void* numaspmv4ell(void* args);
-void* numaspmv4dia(void* args);
+void* COOMatrixMatVectorNumaThread(void* args);
+void* CSRMatrixMatVectorNumaThread(void* args);
+void* CSCMatrixMatVectorNumaThread(void* args);
+void* ELLMatrixMatVectorNumaThread(void* args);
+void* DIAMatrixMatVectorNumaThread(void* args);
 
 #endif
