@@ -1,10 +1,3 @@
-/**
- * @file    : sparse_matrix.h
- * @author  : theSparky Team
- * @version :
- *
- * Functions for Sparse Matrix Init.
- */
 #include "matrix.h"
 #include <algorithm>
 #include <cstring>

@@ -1,10 +1,3 @@
-/**
- * @file    : mat_vec.h
- * @author  : theSparky Team
- * @version :
- *
- * Functions for Matrix and Vector Operations.
- */
 #ifndef MAT_VEC_H
 #define MAT_VEC_H
 

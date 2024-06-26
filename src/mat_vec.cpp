@@ -1,10 +1,3 @@
-/**
- * @file    : mat_vec.cpp
- * @author  : theSparky Team
- * @version :
- *
- * Functions for Matrix and Vector Operations.
- */
 #include <algorithm>
 #include <cassert>
 #include <chrono>

@@ -1,10 +1,3 @@
-/**
- * @file    : vec_operate.h
- * @author  : theSparky Team
- * @version :
- *
- * Functions for Vector operations.
- */
 #ifndef VEC_VEC_H
 #define VEC_VEC_H
 

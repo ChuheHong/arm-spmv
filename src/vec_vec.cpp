@@ -1,11 +1,3 @@
-/**
- * @file    : vec_operate.cpp
- * @author  : theSparky Team
- * @version :
- *
- * Functions for Vector operations.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

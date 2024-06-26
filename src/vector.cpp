@@ -1,10 +1,3 @@
-/**
- * @file    : vector.cpp
- * @author  : theSparky Team
- * @version :
- *
- * Functions for Vector init & comm operations.
- */
 #include "vector.h"
 #include <stdlib.h>
 

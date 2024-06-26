@@ -1,11 +1,3 @@
-/**
- * @file    : vector.h
- * @author  : theSparky Team
- * @version :
- *
- * Functions for Vector operations.
- */
-
 #ifndef VECTOR_H
 #define VECTOR_H
 

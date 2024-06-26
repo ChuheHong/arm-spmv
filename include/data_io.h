@@ -1,10 +1,3 @@
-/**
- * @file    : data_io.cpp
- * @author  : theSparky Team
- * @version :
- *
- * Functions for Matrix and Vector Read and Write.
- */
 #ifndef DATA_IO_H
 #define DATA_IO_H
 

@@ -1,10 +1,3 @@
-/**
- * @file    : mytime.h
- * @author  : theSparky Team
- * @version :
- * 
- * Functions for time.
- */
 #include "mytime.h" 
 	
 #include <cstdlib>
