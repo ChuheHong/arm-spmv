@@ -25,4 +25,6 @@ public:
     void Add2Scaled(double a, const Vector& x, double b, const Vector& y) const;
 };
 
+bool checkVector(const Vector& x, const Vector& y);
+
 #endif  // VECTOR_H

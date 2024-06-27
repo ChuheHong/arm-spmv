@@ -1,4 +1,6 @@
 #include "vector.h"
+#include <cmath>
+#include <cstdlib>
 #include <stdlib.h>
 
 #ifdef USE_OPENMP
@@ -154,4 +156,16 @@ void Vector::Add2Scaled(double a, const Vector& x, double b, const Vector& y) co
         for (int i = 0; i < size; ++i)
             values[i] += a * xv[i] + b * yv[i];
     }
+}
+
+bool checkVector(const Vector& x, const Vector& y)
+{
+    if (x.size != y.size)
+        return false;
+    double* xv = x.values;
+    double* yv = y.values;
+    for (int i = 0; i < x.size; ++i)
+        if (fabs(xv[i] - yv[i]) > 1e-6)
+            return false;
+    return true;
 }

@@ -317,10 +317,10 @@ CSCMatrix::CSCMatrix(const COOMatrix& A) : col_ptr(new int[A.ncol + 1]), row_ind
         col_ptr[j + 1] += col_ptr[j];
     }
 
-    for (int k = 0; k < nnz; ++k)
+    for (int k = nnz - 1; k >= 0; --k)
     {
-        row_ind[k] = Ai[k];
-        values[k]  = Av[k];
+        row_ind[--col_ptr[Aj[k]]] = Ai[k];
+        values[col_ptr[Aj[k]]]    = Av[k];
     }
 }
 
@@ -392,10 +392,10 @@ CSCMatrix& CSCMatrix::operator=(const COOMatrix& A)
         col_ptr[j + 1] += col_ptr[j];
     }
 
-    for (int k = 0; k < nnz; ++k)
+    for (int k = nnz - 1; k >= 0; --k)
     {
-        row_ind[k] = Ai[k];
-        values[k]  = Av[k];
+        row_ind[--col_ptr[Aj[k]]] = Ai[k];
+        values[col_ptr[Aj[k]]]    = Av[k];
     }
 
     return *this;

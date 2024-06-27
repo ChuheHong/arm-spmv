@@ -34,7 +34,7 @@ void COOMatirxMatVector(const COOMatrix& A, const Vector& x, Vector& y)
         int row = row_ind[i];
         int col = col_ind[i];
 #ifdef USE_OPENMP
-#pragma omp atmoic
+#pragma omp atomic
 #endif
         yv[row] += val[i] * xv[col];
     }
@@ -61,7 +61,7 @@ void CSRMatrixMatVector(const CSRMatrix& A, const Vector& x, Vector& y)
         {
             sum += val[j] * xv[col_ind[j]];
         }
-        yv[i] = sum;
+        yv[i] += sum;
     }
     return;
 }
@@ -350,17 +350,6 @@ void CSCMatrixMatVectorNuma(const CSCMatrix& A, const Vector& x, Vector& y, int 
         }
     }
     double t_end = mytimer();
-
-    // Reduce Y from all threads
-    memset(y.values, 0, y.size * sizeof(double));
-    for (int i = 0; i < nthreads; i++)
-    {
-        for (int j = 0; j < y.size; j++)
-        {
-            y.values[j] += p[i].Y[j];
-        }
-    }
-
     double t_avg = ((t_end - t_begin) * 1000.0 + (t_end - t_begin) / 1000.0) / NTESTS;
     printf("### CSC NUMA GFLOPS = %.5f\n", 2 * A.col_ptr[A.ncol] / t_avg / pow(10, 6));
 
@@ -583,7 +572,7 @@ void* ELLMatrixMatVectorNumaThread(void* args)
         {
             sum += values[i * nonzeros_in_row + j] * x[col_ind[i * nonzeros_in_row + j]];
         }
-        y[i] = sum;
+        y[i] += sum;
     }
     return NULL;
 }

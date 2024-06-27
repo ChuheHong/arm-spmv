@@ -39,6 +39,18 @@ int main(int argc, char* argv[])
     y.Resize(nrow);
     x.FillRandom();
 
+    Vector y_ref;
+    y_ref.Resize(nrow);
+    y_ref.Fill(0);
+    // Check correctness
+    for (int k = 0; k < NUM_TEST; k++)
+    {
+        for (int i = 0; i < A.nnz; i++)
+        {
+            y_ref.values[A.row_ind[i]] += A.values[i] * x.values[A.col_ind[i]];
+        }
+    }
+
     // COO-SpMV
     y.Fill(0);
     double t_coo_begin = mytimer();
